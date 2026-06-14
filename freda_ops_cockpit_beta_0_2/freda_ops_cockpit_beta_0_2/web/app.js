@@ -132,11 +132,29 @@
     const posSales = value(pos, ['totalSales', 'netSales', 'grossSales', 'sales']);
     const uberSales = value(uber, ['sales', 'totalSales', 'netSales']);
     const squareSales = value(square, ['netSales', 'totalCollected', 'sales']);
-    const totalLive = (posSales || 0) + (uberSales || 0) + (store.name.includes('Pies') ? (squareSales || 0) : 0);
+    const isPies = store.name.includes('Pies');
+    const channelSales = isPies ? (squareSales || 0) : (uberSales || 0);
+    const totalCaptured = (posSales || 0) + channelSales;
     const baseline = store.recentAvgDay;
-    const ratio = baseline && totalLive ? totalLive / baseline : null;
+    // RAG should not mix Today POS with weekly Uber or monthly Square. Use POS vs baseline when POS is available; otherwise keep seeded status.
+    const ratio = baseline && posSales ? posSales / baseline : null;
     const rag = ratio == null ? store.rag : ratio >= 0.95 ? 'Green' : ratio >= 0.80 ? 'Amber' : 'Red';
-    return { pos, uber, square, posSales, uberSales, squareSales, totalLive: totalLive || null, baseline, ratio, rag };
+    return { pos, uber, square, posSales, uberSales, squareSales, totalLive: totalCaptured || null, totalCaptured: totalCaptured || null, baseline, ratio, rag, isPies };
+  }
+
+  function periodLabel(m, fallback = 'captured') {
+    const p = String(m?.period || fallback || '').trim();
+    if (!p) return 'captured';
+    if (/^(this_week|week_to_date|wtd)$/i.test(p)) return 'WTD';
+    if (/^(today|current_day)$/i.test(p) || /^\d{4}-\d{2}-\d{2}$/.test(p)) return 'Today';
+    if (/^(this_month|month_to_date|mtd)$/i.test(p) || /MTD/i.test(p)) return 'MTD';
+    if (/month|\d{4}-\d{2}-\d{2}\s+to\s+\d{4}-\d{2}-\d{2}/i.test(p)) return 'Captured period';
+    return p;
+  }
+
+  function channelLabel(store, m) {
+    if (store.name.includes('Pies')) return `Square ${periodLabel(m.square, 'MTD')}`;
+    return `Uber ${periodLabel(m.uber, 'this_week')}`;
   }
 
   function value(obj, keys) {
@@ -181,11 +199,11 @@
     const fp = stores.find(s => s.name.includes('Pies'));
     if (pen?.metrics.posSales) items.push(`Penrith POS is ${fmtMoney2(pen.metrics.posSales)} with ${pen.metrics.pos?.orders || '—'} orders captured. Protect afternoon cabinet before 3pm.`);
     else items.push('Sync Penrith reporting.site POS first; it is the priority live-sales test store.');
-    if (bh?.metrics.uberSales) items.push(`Beverly Hills Uber is ${fmtMoney2(bh.metrics.uberSales)} this week in the captured snapshot. Do not judge BH from POS alone.`);
+    if (bh?.metrics.uberSales) items.push(`Beverly Hills Uber WTD is ${fmtMoney2(bh.metrics.uberSales)} in the captured snapshot. Do not judge BH from POS alone, but do not treat WTD Uber as today.`);
     else items.push('Beverly Hills remains the volume engine. Refresh POS + Uber before adjusting production.');
-    if (tp?.metrics.uberSales) items.push(`Taren Point Uber is ${fmtMoney2(tp.metrics.uberSales)} in the captured snapshot; still protect early trade and stock/display follow-up.`);
+    if (tp?.metrics.uberSales) items.push(`Taren Point Uber WTD is ${fmtMoney2(tp.metrics.uberSales)} in the captured snapshot; still protect early trade and stock/display follow-up.`);
     else items.push('Taren Point needs stock/display confirmation from WhatsApp and early-trade protection.');
-    if (fp?.metrics.squareSales) items.push(`Frieda’s Pies Square snapshot is ${fmtMoney2(fp.metrics.squareSales)} with ${fp.metrics.square?.transactions || '—'} transactions for the captured period.`);
+    if (fp?.metrics.squareSales) items.push(`Frieda’s Pies Square MTD/captured-period snapshot is ${fmtMoney2(fp.metrics.squareSales)} with ${fp.metrics.square?.transactions || '—'} transactions. This is not Uber and not necessarily today.`);
     else items.push('Frieda’s Pies needs Square export/API or manual snapshot before pie sales advice is trusted.');
     items.push(`Open WhatsApp/action items: ${actions.filter(a => a.status !== 'Done').length}. Close only after manager confirmation/photo.`);
     return items;
@@ -197,32 +215,33 @@
     return `<article class="store-card">
       <div class="store-title"><div><h3>${esc(s.name)}</h3><div class="muted small">${esc(s.role)}</div></div><span class="rag ${ragClass(m.rag)}"><span class="dot ${ragClass(m.rag)}"></span>${esc(m.rag)}</span></div>
       <div class="kpi-row">
-        <div class="kpi"><div class="label">POS</div><div class="value money">${fmtMoney(m.posSales)}</div></div>
-        <div class="kpi"><div class="label">Uber/Square</div><div class="value money">${fmtMoney((m.uberSales || 0) + (m.squareSales || 0))}</div></div>
-        <div class="kpi"><div class="label">Vs avg</div><div class="value">${m.ratio == null ? '—' : pct(m.ratio * 100)}</div></div>
+        <div class="kpi"><div class="label">POS ${periodLabel(m.pos, m.pos?.sourceView?.includes('screenshot sample') ? 'sample' : 'today')}</div><div class="value money">${fmtMoney(m.posSales)}</div></div>
+        <div class="kpi"><div class="label">${channelLabel(s, m)}</div><div class="value money">${fmtMoney(s.name.includes('Pies') ? m.squareSales : m.uberSales)}</div></div>
+        <div class="kpi"><div class="label">POS vs avg</div><div class="value">${m.ratio == null ? '—' : pct(m.ratio * 100)}</div></div>
       </div>
       <p><strong>Focus:</strong> ${esc(s.todayFocus)}</p>
       <p class="muted small"><strong>Opening rule:</strong> ${esc(s.openingRule)}</p>
-      <p class="footer-note">Actions open: ${open}. Source: ${esc(m.pos?.sourceView || m.uber?.sourceView || m.square?.sourceView || 'seeded analysis')}.</p>
+      <p class="footer-note">Actions open: ${open}. Source: ${esc(m.pos?.sourceView || (s.name.includes('Pies') ? m.square?.sourceView : m.uber?.sourceView) || 'seeded analysis')}.</p>
     </article>`;
   }
 
   function renderLiveSales() {
     const stores = seed.stores.map(s => ({ ...s, metrics: storeMetrics(s) }));
-    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2 adds live POS sync for reporting.site and keeps Uber/Square as separate captured sources so Freda does not understate total sales.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
+    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2.2 separates reporting.site POS from Uber WTD and Square MTD/captured-period data so Freda does not mix today, week-to-date and monthly snapshots.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
       <section class="card"><h2>Store sales snapshot</h2><div class="grid">${stores.map(liveStoreCard).join('')}</div></section>
-      <section class="card"><h2>Captured Uber</h2><div class="grid two">${Object.entries(state.live.uberEats || {}).map(([store, m]) => metricMiniCard(store, 'Uber', m.sales || m.totalSales, `${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)}`)).join('') || '<div class="empty">No Uber snapshot captured yet.</div>'}</div></section>
-      <section class="card"><h2>Captured Square / Frieda’s Pies</h2><div class="grid two">${Object.entries(state.live.square || {}).map(([store, m]) => metricMiniCard(store, 'Square', m.netSales || m.totalCollected || m.sales, `${m.transactions || '—'} transactions · ${esc(m.period || '')}`)).join('') || '<div class="empty">No Square snapshot captured yet.</div>'}</div></section>
+      <section class="card"><h2>Uber WTD / daily manual snapshot</h2><div class="grid two">${Object.entries(state.live.uberEats || {}).filter(([store, m]) => Number(m.sales || m.totalSales || 0) > 0).map(([store, m]) => metricMiniCard(store, `Uber ${periodLabel(m, 'this_week')}`, m.sales || m.totalSales, `${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)} · not POS`)).join('') || '<div class="empty">No Uber WTD snapshot captured yet.</div>'}</div></section>
+      <section class="card"><h2>Square MTD / captured period - Frieda’s Pies</h2><div class="grid two">${Object.entries(state.live.square || {}).map(([store, m]) => metricMiniCard(store, `Square ${periodLabel(m, 'captured')}`, m.netSales || m.totalCollected || m.sales, `${m.transactions || '—'} transactions · ${esc(m.period || 'captured period')} · not Uber`)).join('') || '<div class="empty">No Square snapshot captured yet.</div>'}</div></section>
       <section class="card"><h2>Manual live snapshot</h2>${manualSnapshotForm()}</section>`;
   }
 
   function liveStoreCard(s) {
     const m = s.metrics;
     const pos = m.pos || {};
+    const channelAmount = s.name.includes('Pies') ? m.squareSales : m.uberSales;
     return `<article class="action-card"><div class="action-head"><div><strong>${esc(s.name)}</strong><br><span class="muted small">${esc(s.primaryWindow)}</span></div><span class="rag ${ragClass(m.rag)}"><span class="dot ${ragClass(m.rag)}"></span>${m.rag}</span></div>
-      <div class="kpi-row"><div class="kpi"><div class="label">POS</div><div class="value">${fmtMoney2(m.posSales)}</div></div><div class="kpi"><div class="label">Uber</div><div class="value">${fmtMoney2(m.uberSales)}</div></div><div class="kpi"><div class="label">Total captured</div><div class="value">${fmtMoney2(m.totalLive)}</div></div></div>
+      <div class="kpi-row"><div class="kpi"><div class="label">POS ${periodLabel(m.pos, m.pos?.sourceView?.includes('screenshot sample') ? 'sample' : 'today')}</div><div class="value">${fmtMoney2(m.posSales)}</div></div><div class="kpi"><div class="label">${channelLabel(s, m)}</div><div class="value">${fmtMoney2(channelAmount)}</div></div><div class="kpi"><div class="label">Captured total*</div><div class="value">${fmtMoney2(m.totalCaptured)}</div></div></div>
       <p class="muted small">Orders: ${pos.orders || '—'} · AOV: ${fmtMoney2(pos.averageSpend || pos.aov)} · Top product: ${esc(pos.topProduct || '—')} · Top category: ${esc(pos.topCategory || '—')}</p>
-      <p class="footer-note">${esc(pos.sourceView || 'No live POS synced yet; sample/offline mode may be shown.')}</p></article>`;
+      <p class="footer-note">${esc(pos.sourceView || 'No live POS synced yet; sample/offline mode may be shown.')} ${s.name.includes('Pies') ? 'Square is a captured-period value, not Uber.' : 'Uber is WTD unless captured as a daily snapshot.'} *Captured total may mix periods.</p></article>`;
   }
 
   function metricMiniCard(title, label, amount, detail) {
@@ -230,7 +249,7 @@
   }
 
   function manualSnapshotForm() {
-    return `<form id="manualSnapshotForm" class="form-grid"><select class="input" id="snapshotSource"><option value="uberEats">Uber Eats</option><option value="square">Square / Frieda's Pies</option><option value="reportingPOS">Reporting POS manual</option></select><select class="input" id="snapshotStore">${seed.stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="snapshotPeriod" placeholder="Period, e.g. this_week or 2026-06-14"/><input class="input" id="snapshotSales" type="number" step="0.01" placeholder="Sales / net sales"/><input class="input" id="snapshotOrders" type="number" step="1" placeholder="Orders / transactions"/><input class="input" id="snapshotAov" type="number" step="0.01" placeholder="AOV / average spend"/><textarea id="snapshotNote" placeholder="Optional note"></textarea><button class="primary-btn">Save snapshot</button><div id="manualSnapshotResult" class="muted small"></div></form>`;
+    return `<form id="manualSnapshotForm" class="form-grid"><select class="input" id="snapshotSource"><option value="uberEats">Uber Eats</option><option value="square">Square / Frieda's Pies</option><option value="reportingPOS">Reporting POS manual</option></select><select class="input" id="snapshotStore">${seed.stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="snapshotPeriod" placeholder="Period, e.g. 2026-06-14, this_week, or MTD Jun 2026"/><input class="input" id="snapshotSales" type="number" step="0.01" placeholder="Sales / net sales"/><input class="input" id="snapshotOrders" type="number" step="1" placeholder="Orders / transactions"/><input class="input" id="snapshotAov" type="number" step="0.01" placeholder="AOV / average spend"/><textarea id="snapshotNote" placeholder="Optional note"></textarea><button class="primary-btn">Save snapshot</button><div id="manualSnapshotResult" class="muted small"></div></form>`;
   }
 
   function renderStores() {
@@ -256,7 +275,7 @@
       const action = productionAction(s, m);
       return `<div class="card compact"><div class="store-title"><h3>${esc(s.name)}</h3><span class="rag ${ragClass(m.rag)}"><span class="dot ${ragClass(m.rag)}"></span>${m.rag}</span></div><p>${esc(action)}</p><p class="muted small">Captured: ${fmtMoney2(m.totalLive)} · Baseline: ${fmtMoney(s.recentAvgDay)}</p></div>`;
     }).join('');
-    return `<section class="hero-card"><h2>Sales & Production</h2><p class="muted">Production advice now checks the captured live sales layer before using the production/cook plans.</p></section><section class="card"><h2>Live production risk</h2><div class="grid two">${liveCards}</div></section><section class="card"><h2>L.A. Donuts weekly production plan</h2><div class="kpi-row"><div class="kpi"><div class="label">Week</div><div class="value" style="font-size:18px">${esc(seed.production.weekLabel)}</div></div><div class="kpi"><div class="label">Total plan</div><div class="value">${total.toLocaleString()}</div></div><div class="kpi"><div class="label">Risk</div><div class="value" style="font-size:18px">Reserve</div></div></div><div class="bar-wrap">${seed.production.byStore.map(x => `<div class="bar-row"><span>${esc(x.store)}</span><div class="bar-track"><div class="bar-fill" style="width:${(x.totalPlan / maxStore) * 100}%"></div></div><strong>${x.totalPlan.toLocaleString()}</strong></div>`).join('')}</div></section><section class="card"><h2>Frieda's Pies plan</h2><div class="kpi-row"><div class="kpi"><div class="label">Target bake</div><div class="value">${seed.production.friedasPies.totalTarget.toLocaleString()}</div></div><div class="kpi"><div class="label">Forecast gross</div><div class="value money">${fmtMoney(seed.production.friedasPies.forecastGrossSales)}</div></div><div class="kpi"><div class="label">Square captured</div><div class="value money">${fmtMoney2(storeMetrics(seed.stores.find(s => s.name.includes('Pies'))).squareSales)}</div></div></div><ul class="list">${seed.production.friedasPies.topProducts.map(p => `<li><strong>${esc(p.product)}</strong><br><span class="muted">${p.targetBake.toLocaleString()} target bake</span></li>`).join('')}</ul></section><section class="card"><h2>Recent product signals from ticket history</h2><div class="grid">${Object.values(seed.ticketHistory).map(h => `<div class="card compact"><h3>${esc(h.store)}</h3><p class="muted small">${esc(h.dataCaveat)}</p><div class="bar-wrap">${(h.recentTopProducts || []).slice(0, 5).map(p => `<div class="bar-row"><span>${esc(p.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${(p.qty / ((h.recentTopProducts || [{ qty: 1 }])[0].qty || 1)) * 100}%"></div></div><strong>${p.qty}</strong></div>`).join('')}</div></div>`).join('')}</div></section>`;
+    return `<section class="hero-card"><h2>Sales & Production</h2><p class="muted">Production advice now checks the captured live sales layer before using the production/cook plans.</p></section><section class="card"><h2>Live production risk</h2><div class="grid two">${liveCards}</div></section><section class="card"><h2>L.A. Donuts weekly production plan</h2><div class="kpi-row"><div class="kpi"><div class="label">Week</div><div class="value" style="font-size:18px">${esc(seed.production.weekLabel)}</div></div><div class="kpi"><div class="label">Total plan</div><div class="value">${total.toLocaleString()}</div></div><div class="kpi"><div class="label">Risk</div><div class="value" style="font-size:18px">Reserve</div></div></div><div class="bar-wrap">${seed.production.byStore.map(x => `<div class="bar-row"><span>${esc(x.store)}</span><div class="bar-track"><div class="bar-fill" style="width:${(x.totalPlan / maxStore) * 100}%"></div></div><strong>${x.totalPlan.toLocaleString()}</strong></div>`).join('')}</div></section><section class="card"><h2>Frieda's Pies plan</h2><div class="kpi-row"><div class="kpi"><div class="label">Target bake</div><div class="value">${seed.production.friedasPies.totalTarget.toLocaleString()}</div></div><div class="kpi"><div class="label">Forecast gross</div><div class="value money">${fmtMoney(seed.production.friedasPies.forecastGrossSales)}</div></div><div class="kpi"><div class="label">Square MTD/captured</div><div class="value money">${fmtMoney2(storeMetrics(seed.stores.find(s => s.name.includes('Pies'))).squareSales)}</div></div></div><ul class="list">${seed.production.friedasPies.topProducts.map(p => `<li><strong>${esc(p.product)}</strong><br><span class="muted">${p.targetBake.toLocaleString()} target bake</span></li>`).join('')}</ul></section><section class="card"><h2>Recent product signals from ticket history</h2><div class="grid">${Object.values(seed.ticketHistory).map(h => `<div class="card compact"><h3>${esc(h.store)}</h3><p class="muted small">${esc(h.dataCaveat)}</p><div class="bar-wrap">${(h.recentTopProducts || []).slice(0, 5).map(p => `<div class="bar-row"><span>${esc(p.name)}</span><div class="bar-track"><div class="bar-fill" style="width:${(p.qty / ((h.recentTopProducts || [{ qty: 1 }])[0].qty || 1)) * 100}%"></div></div><strong>${p.qty}</strong></div>`).join('')}</div></div>`).join('')}</div></section>`;
   }
 
   function productionAction(s, m) {
@@ -280,7 +299,7 @@
   function renderAssistant() {
     const messages = state.chat.length ? state.chat : [{ role: 'ai', text: assistantAnswer('What needs my attention today?') }];
     const suggestions = ['What needs my attention today?', 'Show live sales by store', 'Which store is underperforming?', 'How much Uber should I add?', 'Draft a message to Taren Point manager', 'How do I make a thickshake?'];
-    return `<section class="hero-card"><h2>Ask Freda AI</h2><p class="muted">The assistant now checks live POS/Uber/Square snapshots first, then falls back to seed analysis, WhatsApp exports and production logic.</p></section><section class="chat-panel"><div id="chatLog" class="chat-log">${messages.map(m => `<div class="bubble ${m.role}">${esc(m.text)}</div>`).join('')}</div><div class="suggestions">${suggestions.map(s => `<button class="suggestion" data-suggest="${esc(s)}">${esc(s)}</button>`).join('')}</div><form id="chatForm" class="chat-form"><input class="input" id="chatInput" placeholder="Ask Freda Ops..." autocomplete="off"/><button class="primary-btn">Send</button></form></section>`;
+    return `<section class="hero-card"><h2>Ask Freda AI</h2><p class="muted">The assistant now checks POS Today, Uber WTD/daily snapshots and Square MTD/captured-period snapshots first, then falls back to seed analysis, WhatsApp exports and production logic.</p></section><section class="chat-panel"><div id="chatLog" class="chat-log">${messages.map(m => `<div class="bubble ${m.role}">${esc(m.text)}</div>`).join('')}</div><div class="suggestions">${suggestions.map(s => `<button class="suggestion" data-suggest="${esc(s)}">${esc(s)}</button>`).join('')}</div><form id="chatForm" class="chat-form"><input class="input" id="chatInput" placeholder="Ask Freda Ops..." autocomplete="off"/><button class="primary-btn">Send</button></form></section>`;
   }
 
   function assistantAnswer(q) {
@@ -288,10 +307,10 @@
     const actions = mergedWhatsappActions().filter(a => a.status !== 'Done').sort((a, b) => severityRank(b.severity) - severityRank(a.severity));
     const stores = seed.stores.map(s => ({ ...s, metrics: storeMetrics(s) }));
     if (query.includes('live') || query.includes('sales')) {
-      return stores.map(s => `${s.name}: POS ${fmtMoney2(s.metrics.posSales)}, Uber/Square ${fmtMoney2((s.metrics.uberSales || 0) + (s.metrics.squareSales || 0))}, captured total ${fmtMoney2(s.metrics.totalLive)}, status ${s.metrics.rag}.`).join('\n') + '\n\nReminder: Uber is separate from POS and must be added on top.';
+      return stores.map(s => `${s.name}: POS ${fmtMoney2(s.metrics.posSales)}, channel ${fmtMoney2(s.name.includes('Pies') ? s.metrics.squareSales : s.metrics.uberSales)}, captured total ${fmtMoney2(s.metrics.totalLive)}, status ${s.metrics.rag}.`).join('\n') + '\n\nReminder: Uber is separate from POS and is WTD unless a daily snapshot is manually captured from the chart. Square for Frieda’s Pies is not Uber and should be read as MTD/captured period unless a daily export is entered.';
     }
-    if (query.includes('attention') || query.includes('today')) return dailyPriorities(stores, actions).map((x, i) => `${i + 1}. ${x}`).join('\n') + `\n\nSource confidence: POS ${state.serverOnline ? 'live when synced' : 'sample/offline'}, Uber/Square captured/manual, WhatsApp export medium, hiring/training/audit demo.`;
-    if (query.includes('uber')) return `Uber is not included in reporting.site POS. Captured Uber snapshot:\n${Object.entries(state.live.uberEats || {}).map(([s, m]) => `- ${s}: ${fmtMoney2(m.sales || m.totalSales)} · ${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)}`).join('\n') || 'No Uber snapshot yet.'}`;
+    if (query.includes('attention') || query.includes('today')) return dailyPriorities(stores, actions).map((x, i) => `${i + 1}. ${x}`).join('\n') + `\n\nSource confidence: POS ${state.serverOnline ? 'live when synced' : 'sample/offline'}, Uber/Square MTD/captured/manual, WhatsApp export medium, hiring/training/audit demo.`;
+    if (query.includes('uber')) return `Uber is not included in reporting.site POS. Current captured Uber WTD/daily snapshot:\n${Object.entries(state.live.uberEats || {}).map(([s, m]) => `- ${s}: ${fmtMoney2(m.sales || m.totalSales)} · ${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)}`).join('\n') || 'No Uber snapshot yet.'}`;
     if (query.includes('underperform')) {
       const ranked = stores.filter(s => s.metrics.ratio != null).sort((a, b) => a.metrics.ratio - b.metrics.ratio);
       if (ranked[0]) return `${ranked[0].name} is lowest against recent average in the captured data (${pct(ranked[0].metrics.ratio * 100)} of avg). Check whether the source is complete before acting. Taren Point remains the store with the most execution risk if stock/display signals are open.`;
@@ -300,7 +319,7 @@
     if (query.includes('taren') || query.includes('tp')) return `Taren Point: keep 6:00am as default, confirm stock/display from WhatsApp, and do not move to 8:00am as normal setting. Draft: “Can you please confirm current stock, any sold-out risk, and send cabinet/closing photos today?”`;
     if (query.includes('beverly') || query.includes('bh')) return `Beverly Hills: volume engine. Release reserve before the 12:00-16:00 window and add Uber to POS before judging total demand. Weekend production should not be reduced just because the store opens later.`;
     if (query.includes('penrith')) return `Penrith: live POS test store. Captured POS is ${fmtMoney2(storeMetrics(seed.stores.find(s => s.name === 'Penrith')).posSales)}. Protect the 15:00-18:00 peak and check cabinet before 3pm.`;
-    if (query.includes('frieda') || query.includes('pie') || query.includes('square')) return `Frieda’s Pies: use Square snapshot/export plus leftover count. Captured Square is ${fmtMoney2(storeMetrics(seed.stores.find(s => s.name.includes('Pies'))).squareSales)}. Do not trust net bake without leftovers.`;
+    if (query.includes('frieda') || query.includes('pie') || query.includes('square')) return `Frieda’s Pies: use Square snapshot/export plus leftover count. Square MTD/captured period is ${fmtMoney2(storeMetrics(seed.stores.find(s => s.name.includes('Pies'))).squareSales)}. This is not Uber and should be treated as MTD/captured period unless a daily Square export is entered. Do not trust net bake without leftovers.`;
     if (query.includes('thickshake') || query.includes('milkshake')) { const sop = seed.sops.find(s => s.id === 'SOP-THICKSHAKE'); return `${sop.title}:\n${sop.steps.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n\nStatus: ${sop.status}`; }
     if (query.includes('sop') || query.includes('cabinet') || query.includes('close')) { const sop = query.includes('close') ? seed.sops.find(s => s.id === 'SOP-CLOSE') : seed.sops.find(s => s.id === 'SOP-CABINET'); return `${sop.title}:\n${sop.steps.map((x, i) => `${i + 1}. ${x}`).join('\n')}\n\nStatus: ${sop.status}`; }
     if (query.includes('message') || query.includes('draft')) return `Draft message:\n“Hi team, can you please confirm today’s cabinet status, any stockout risk, and send the next photo update? If anything is low before peak trade, please flag it now so we can fix it before customers see it.”`;
@@ -395,7 +414,7 @@
       const body = await api('/api/live/manual-snapshot', { method: 'POST', body: JSON.stringify(payload) });
       state.live = body.live || state.live;
       state.serverOnline = true;
-      $('manualSnapshotResult').textContent = 'Snapshot saved.';
+      $('manualSnapshotResult').textContent = 'Snapshot saved. Use period 2026-06-14 for daily Uber, this_week for Uber WTD, or MTD Jun 2026 for Square.';
       render();
     } catch (error) {
       $('manualSnapshotResult').textContent = 'Could not save to server. Saved locally in this browser only.';

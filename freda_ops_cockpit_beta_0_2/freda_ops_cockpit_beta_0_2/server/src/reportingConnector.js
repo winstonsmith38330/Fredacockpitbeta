@@ -23,7 +23,8 @@ export function getReportingConfig(env = process.env) {
 }
 
 export function buildReportingHeaders(env = process.env) {
-  const cookieHeader = env.REPORTING_COOKIE || (env.REPORTING_PHPSESSID ? `PHPSESSID=${env.REPORTING_PHPSESSID}` : '');
+  const rawSession = String(env.REPORTING_PHPSESSID || '').trim().replace(/^PHPSESSID=/i, '');
+  const cookieHeader = env.REPORTING_COOKIE || (rawSession ? `PHPSESSID=${rawSession}` : '');
   if (!cookieHeader) {
     return { error: 'Missing REPORTING_PHPSESSID or REPORTING_COOKIE in server/.env' };
   }
@@ -153,6 +154,22 @@ function extractMetrics(view, text) {
     ['bestDayValue', /BEST\s+DAY\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i]
   ];
 
+  // Extra support for Uber/Square pages copied from logged-in browser views.
+  // Examples: "6 672 $AU Valeur totale des articles vendus", "201 Commandes", "40 731,56 $ Total encaissé".
+  const extraPatterns = [
+    ['totalSales', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s*AU.*?Valeur\s+totale\s+des\s+articles\s+vendus/i],
+    ['orders', /([\d\s,]+)\s+Commandes\s+qui\s+ont\s+g[ée]n[ée]r[ée]\s+des\s+ventes/i],
+    ['averageSpend', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s*AU.*?Valeur\s+moyenne\s+des\s+articles\s+vendus\s+par\s+commande/i],
+    ['transactions', /([\d\s,]+)\s+TRANSACTIONS\s+FINALIS[ÉE]ES/i],
+    ['totalCollected', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s+TOTAL\s+ENCAISS[ÉE]/i],
+    ['netSales', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s+VENTES\s+NETTES/i]
+  ];
+
+  for (const [key, regex] of extraPatterns) {
+    const m = t.match(regex);
+    if (m && metrics[key] == null) metrics[key] = toNumber(m[1]);
+  }
+
   for (const [key, regex] of patterns) {
     const m = t.match(regex);
     if (m) metrics[key] = toNumber(m[1]);
@@ -199,7 +216,7 @@ export function summarizeReportingStore(storeName, views) {
     topCategory: firstText(productSummary.bestSellingCategory, category.bestSellingCategory),
     leastCategory: firstText(productSummary.leastSellingCategory, category.leastSellingCategory),
     views,
-    sourceView: 'reporting.site live connector',
+    sourceView: `reporting.site live connector (${Object.keys(views).filter(v => views[v]?.ok).join(', ') || 'no successful views'})`,
     capturedAt: new Date().toISOString()
   };
 }
@@ -223,7 +240,10 @@ function cleanLabel(s) {
 
 function toNumber(v) {
   if (v === null || v === undefined) return null;
-  const n = Number(String(v).replace(/[^0-9.\-]/g, ''));
+  let s = String(v).trim().replace(/\s+/g, '').replace(/[^0-9,.-]/g, '');
+  if (s.includes(',') && !s.includes('.')) s = s.replace(',', '.');
+  else s = s.replace(/,/g, '');
+  const n = Number(s);
   return Number.isFinite(n) ? n : null;
 }
 

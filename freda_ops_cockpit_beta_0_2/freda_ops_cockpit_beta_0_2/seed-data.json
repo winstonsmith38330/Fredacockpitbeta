@@ -1,17 +1,17 @@
 {
   "meta": {
     "appName": "Freda Ops Cockpit",
-    "version": "Beta 0.2",
+    "version": "Beta 0.2.2",
     "generatedAt": "2026-06-14T09:35:00Z",
-    "mode": "Live-sales capable prototype: reporting.site POS sync + Uber/Square manual/API hooks + WhatsApp export ingestion"
+    "mode": "Live-sales capable prototype: reporting.site POS Today sync + Uber WTD/current-day manual capture labels + Square MTD/captured-period separation + WhatsApp export ingestion"
   },
   "briefing": [
-    "Use live POS first: refresh reporting.site before Freda reviews the morning briefing.",
-    "Penrith is now connected as the priority live-sales test store; protect the 15:00-18:00 window and check cabinet before 3pm.",
-    "Beverly Hills remains the volume engine; use live sales against its recent average before changing production.",
+    "Use reporting.site POS as Today sales when live sync succeeds; Penrith shown in seed data is a screenshot sample until confirmed by sync status.",
+    "Uber values from the current Uber screen are WTD because the page uses dateRange=this_week; only treat Uber as Today when a daily chart value is manually captured.",
+    "Frieda\u2019s Pies is Square-led; label it as Square MTD/captured period, not Uber.",
+    "Beverly Hills remains the volume engine; use live POS Today plus Uber WTD/daily context before changing production.",
     "Taren Point needs early-trade protection and WhatsApp follow-up on stock/display signals.",
-    "Frieda's Pies is Square-led; use Square/Sales export or manual monthly snapshot until a Square API token is configured.",
-    "Uber must be added on top of POS because it is not included in reporting.site POS sales."
+    "WhatsApp action linking is still a next iteration; for now the beta validates the interface and action format."
   ],
   "stores": [
     {
@@ -964,7 +964,7 @@
           {
             "date": "4/22/26",
             "category": "cleanliness",
-            "text": "Hi Frida, do you want a photo of both displays or just one? ☺️ <This message was edited>"
+            "text": "Hi Frida, do you want a photo of both displays or just one? \u263a\ufe0f <This message was edited>"
           },
           {
             "date": "4/23/26",
@@ -1021,7 +1021,7 @@
           {
             "date": "6/10/26",
             "category": "photo_update",
-            "text": "Hey guys from now on if there’s allot of donuts left over from taren point I must be notified by 4pm and I’ll get them picked up to go to Beverly Hills store"
+            "text": "Hey guys from now on if there\u2019s allot of donuts left over from taren point I must be notified by 4pm and I\u2019ll get them picked up to go to Beverly Hills store"
           },
           {
             "date": "6/11/26",
@@ -1268,7 +1268,7 @@
         "severity": "Amber",
         "category": "Planning",
         "summary": "Confirm leftover counts before daily bake so the smart plan produces net bake.",
-        "evidence": "Frieda’s Pies smart plan has leftover field before baking.",
+        "evidence": "Frieda\u2019s Pies smart plan has leftover field before baking.",
         "status": "Open",
         "source": "Frieda pies smart plan"
       }
@@ -1702,7 +1702,7 @@
   },
   "liveSamples": {
     "lastUpdated": "2026-06-14T09:35:00Z",
-    "source": "screenshot_sample_only_until_server_sync",
+    "source": "mixed screenshot samples: Penrith POS Today sample, Uber WTD screenshot samples, Square MTD/captured-period sample",
     "reportingPOS": {
       "Penrith": {
         "period": "2026-06-14",
@@ -1730,7 +1730,7 @@
         "orders": 201,
         "aov": 33.19,
         "changeSalesPct": 64,
-        "sourceView": "Uber Eats screenshot sample"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
       },
       "Penrith": {
         "period": "this_week",
@@ -1738,7 +1738,7 @@
         "orders": 104,
         "aov": 27.5,
         "changeSalesPct": 21,
-        "sourceView": "Uber Eats screenshot sample"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
       },
       "Taren Point": {
         "period": "this_week",
@@ -1746,24 +1746,16 @@
         "orders": 28,
         "aov": 29.64,
         "changeSalesPct": 73,
-        "sourceView": "Uber Eats screenshot sample"
-      },
-      "Frieda's Pies": {
-        "period": "this_week",
-        "sales": 0,
-        "orders": 0,
-        "aov": 0,
-        "changeSalesPct": 0,
-        "sourceView": "Uber Eats screenshot sample"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
       }
     },
     "square": {
       "Frieda's Pies": {
-        "period": "2026-06-01 to 2026-06-30",
+        "period": "MTD Jun 2026",
         "netSales": 40731.56,
         "totalCollected": 40731.56,
         "transactions": 1717,
-        "sourceView": "Square dashboard screenshot sample"
+        "sourceView": "Square MTD dashboard screenshot sample"
       }
     }
   }

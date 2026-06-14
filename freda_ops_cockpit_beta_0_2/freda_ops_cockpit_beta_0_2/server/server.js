@@ -29,7 +29,7 @@ function saveLive(data) { writeJson(LIVE_PATH, data); return data; }
 function liveMerged() { return mergeLive(seed(), liveRaw()); }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.0', livePath: LIVE_PATH });
+  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.2', livePath: LIVE_PATH });
 });
 
 app.get('/api/seed', (_req, res) => res.json(seed()));
@@ -136,7 +136,7 @@ app.post('/api/assistant', (req, res) => {
   const question = String(req.body?.question || '').toLowerCase();
   const live = liveMerged();
   const stores = Object.entries(live.reportingPOS || {}).map(([store, m]) => `${store}: ${money(m.totalSales || m.netSales || m.sales)} POS, ${m.orders || '—'} orders`);
-  const uber = Object.entries(live.uberEats || {}).map(([store, m]) => `${store}: ${money(m.sales || m.totalSales)} Uber`);
+  const uber = Object.entries(live.uberEats || {}).map(([store, m]) => `${store}: ${money(m.sales || m.totalSales)} Uber ${m.period || 'captured'}`);
   let answer = `Live snapshot available. POS: ${stores.join('; ') || 'not synced yet'}. Uber: ${uber.join('; ') || 'not captured yet'}.`;
   if (question.includes('attention') || question.includes('today')) {
     answer = `Today: refresh POS first, then check Penrith cabinet before 3pm, Beverly Hills reserve before lunch, Taren Point stock/display confirmation, and Frieda's Pies Square/leftover position. ${answer}`;
@@ -149,7 +149,7 @@ app.post('/api/assistant', (req, res) => {
 app.use(express.static(WEB_PATH, { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(WEB_PATH, 'index.html')));
 
-app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2 running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2.2 running on http://localhost:${PORT}`));
 
 function money(n) {
   return n == null ? '—' : '$' + Math.round(Number(n)).toLocaleString('en-AU');
