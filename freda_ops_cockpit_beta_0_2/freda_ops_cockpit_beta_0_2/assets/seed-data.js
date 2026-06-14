@@ -1,72 +1,1762 @@
-window.FREDA_SEED_DATA = {
-  stores: [
+{
+  "meta": {
+    "appName": "Freda Ops Cockpit",
+    "version": "Beta 0.2.2",
+    "generatedAt": "2026-06-14T09:35:00Z",
+    "mode": "Live-sales capable prototype: reporting.site POS Today sync + Uber WTD/current-day manual capture labels + Square MTD/captured-period separation + WhatsApp export ingestion"
+  },
+  "briefing": [
+    "Use reporting.site POS as Today sales when live sync succeeds; Penrith shown in seed data is a screenshot sample until confirmed by sync status.",
+    "Uber values from the current Uber screen are WTD because the page uses dateRange=this_week; only treat Uber as Today when a daily chart value is manually captured.",
+    "Frieda\u2019s Pies is Square-led; label it as Square MTD/captured period, not Uber.",
+    "Beverly Hills remains the volume engine; use live POS Today plus Uber WTD/daily context before changing production.",
+    "Taren Point needs early-trade protection and WhatsApp follow-up on stock/display signals.",
+    "WhatsApp action linking is still a next iteration; for now the beta validates the interface and action format."
+  ],
+  "stores": [
     {
-      id: "beverly_hills",
-      name: "Beverly Hills",
-      status: "Amber",
-      sales: 7599,
-      focus: "Protect lunch and early-afternoon cabinet fullness.",
-      notes: "Main volume engine. Strongest risk window is 12:00-16:00."
+      "id": "bh",
+      "name": "Beverly Hills",
+      "rag": "Amber",
+      "role": "Flagship donut and beverage store / volume engine",
+      "recentAvgDay": 7599,
+      "fullPeriodAvgDay": 5919,
+      "primaryWindow": "Lunch 12-15",
+      "primaryWindowShare": 35.0,
+      "topHours": [
+        {
+          "hour": "13:00",
+          "sales": 904
+        },
+        {
+          "hour": "14:00",
+          "sales": 890
+        },
+        {
+          "hour": "12:00",
+          "sales": 864
+        }
+      ],
+      "dayparts": [
+        {
+          "name": "Early 6-9",
+          "sales": 243,
+          "share": 3.2
+        },
+        {
+          "name": "Morning 9-12",
+          "sales": 1865,
+          "share": 24.5
+        },
+        {
+          "name": "Lunch 12-15",
+          "sales": 2658,
+          "share": 35.0
+        },
+        {
+          "name": "Afternoon 15-18",
+          "sales": 2131,
+          "share": 28.0
+        },
+        {
+          "name": "Evening 18+",
+          "sales": 702,
+          "share": 9.2
+        }
+      ],
+      "openingRule": "Pilot 8:00am Mon-Thu and Sunday; use 7:30am Friday/Saturday and event days if production allows. Never later than 8:30am without fresh data.",
+      "todayFocus": "Open full and fresh; release top-up reserve before the 12:00-16:00 window, not after the cabinet is thin.",
+      "risk": "Weekend and event demand can overwhelm availability if reserve is not protected.",
+      "managerPrompt": "Please send 11am and 1pm cabinet photos and confirm reserve release before lunch.",
+      "ticketHistory": {
+        "store": "Beverly Hills",
+        "file": "HISTORY_BeverlyHillsV1(7).csv",
+        "rows": 449246,
+        "dateRange": "2023-10-02 to 2026-06-12",
+        "latestDate": "2026-06-12",
+        "recentDailyAvgFromTicketHistory": 5120.89,
+        "recentTopProducts": [
+          {
+            "name": "Special",
+            "qty": 2970
+          },
+          {
+            "name": "Homer",
+            "qty": 2430
+          },
+          {
+            "name": "Glazed",
+            "qty": 1886
+          },
+          {
+            "name": "Mnms",
+            "qty": 1352
+          },
+          {
+            "name": "Boston Creme",
+            "qty": 1334
+          },
+          {
+            "name": "Nutella",
+            "qty": 1296
+          },
+          {
+            "name": "Chocolate Iced",
+            "qty": 1210
+          },
+          {
+            "name": "Pineapple",
+            "qty": 1167
+          },
+          {
+            "name": "Cream Finger Bun",
+            "qty": 1089
+          },
+          {
+            "name": "Cinnamon Scroll",
+            "qty": 1001
+          }
+        ],
+        "recentTopCategories": [
+          {
+            "name": "Traditional",
+            "qty": 15548
+          },
+          {
+            "name": "Gourmet",
+            "qty": 13656
+          },
+          {
+            "name": "Beverage",
+            "qty": 1063
+          }
+        ],
+        "recentTopHours": [
+          {
+            "hour": "13:00",
+            "sales": 17461
+          },
+          {
+            "hour": "14:00",
+            "sales": 17174
+          },
+          {
+            "hour": "12:00",
+            "sales": 16899
+          },
+          {
+            "hour": "16:00",
+            "sales": 15527
+          },
+          {
+            "hour": "11:00",
+            "sales": 14947
+          }
+        ],
+        "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+      },
+      "openActions": 5
     },
     {
-      id: "penrith",
-      name: "Penrith",
-      status: "Green",
-      sales: 3766,
-      focus: "Keep cabinet strong from lunch through afternoon.",
-      notes: "Afternoon-led store. Watch 15:00-18:00."
+      "id": "pen",
+      "name": "Penrith",
+      "rag": "Green",
+      "role": "Donuts plus pie/combo lunch offer; afternoon-led store",
+      "recentAvgDay": 3766,
+      "fullPeriodAvgDay": 3302,
+      "primaryWindow": "Afternoon 15-18",
+      "primaryWindowShare": 32.1,
+      "topHours": [
+        {
+          "hour": "16:00",
+          "sales": 438
+        },
+        {
+          "hour": "15:00",
+          "sales": 425
+        },
+        {
+          "hour": "13:00",
+          "sales": 412
+        }
+      ],
+      "dayparts": [
+        {
+          "name": "Early 6-9",
+          "sales": 6,
+          "share": 0.2
+        },
+        {
+          "name": "Morning 9-12",
+          "sales": 722,
+          "share": 19.2
+        },
+        {
+          "name": "Lunch 12-15",
+          "sales": 1122,
+          "share": 29.8
+        },
+        {
+          "name": "Afternoon 15-18",
+          "sales": 1209,
+          "share": 32.1
+        },
+        {
+          "name": "Evening 18+",
+          "sales": 707,
+          "share": 18.8
+        }
+      ],
+      "openingRule": "8:00am is safe for next week. 8:30am can be tested if there is a clear labour/production benefit; avoid 9:00am as the 8-9 window starts to matter.",
+      "todayFocus": "Keep cabinet strong from lunch onward and protect the 15:00-18:00 window.",
+      "risk": "Afternoon cabinet thinning and pie/combo execution.",
+      "managerPrompt": "Please confirm cabinet strength before 3pm and whether any pie/combo stock is low.",
+      "ticketHistory": {
+        "store": "Penrith",
+        "file": "HISTORY_PenrithV1(7).csv",
+        "rows": 202290,
+        "dateRange": "2025-09-18 to 2026-06-12",
+        "latestDate": "2026-06-12",
+        "recentDailyAvgFromTicketHistory": 2983.85,
+        "recentTopProducts": [
+          {
+            "name": "Special",
+            "qty": 1354
+          },
+          {
+            "name": "Homer",
+            "qty": 1189
+          },
+          {
+            "name": "Glazed",
+            "qty": 955
+          },
+          {
+            "name": "Mnms",
+            "qty": 890
+          },
+          {
+            "name": "Boston Creme",
+            "qty": 852
+          },
+          {
+            "name": "Vanilla Slice",
+            "qty": 803
+          },
+          {
+            "name": "Pineapple",
+            "qty": 758
+          },
+          {
+            "name": "Nutella",
+            "qty": 704
+          },
+          {
+            "name": "Banana Custard",
+            "qty": 643
+          },
+          {
+            "name": "Cinnamon Scroll",
+            "qty": 587
+          }
+        ],
+        "recentTopCategories": [
+          {
+            "name": "Traditional",
+            "qty": 10028
+          },
+          {
+            "name": "Gourmet",
+            "qty": 7964
+          },
+          {
+            "name": "Beverage",
+            "qty": 520
+          }
+        ],
+        "recentTopHours": [
+          {
+            "hour": "15:00",
+            "sales": 10110
+          },
+          {
+            "hour": "16:00",
+            "sales": 9392
+          },
+          {
+            "hour": "14:00",
+            "sales": 9169
+          },
+          {
+            "hour": "13:00",
+            "sales": 9105
+          },
+          {
+            "hour": "12:00",
+            "sales": 8273
+          }
+        ],
+        "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+      },
+      "openActions": 2
     },
     {
-      id: "taren_point",
-      name: "Taren Point",
-      status: "Amber",
-      sales: 1611,
-      focus: "Protect early trade and lunch window.",
-      notes: "Concentrated between 10:00-15:00. Keep operations simple."
+      "id": "tp",
+      "name": "Taren Point",
+      "rag": "Red",
+      "role": "Burger/combo lunch store with early pie/coffee pattern and onsite cooking",
+      "recentAvgDay": 1611,
+      "fullPeriodAvgDay": 1578,
+      "primaryWindow": "Lunch 12-15",
+      "primaryWindowShare": 40.9,
+      "topHours": [
+        {
+          "hour": "12:00",
+          "sales": 322
+        },
+        {
+          "hour": "10:00",
+          "sales": 248
+        },
+        {
+          "hour": "11:00",
+          "sales": 230
+        }
+      ],
+      "dayparts": [
+        {
+          "name": "Early 6-9",
+          "sales": null,
+          "share": null
+        },
+        {
+          "name": "Morning 9-12",
+          "sales": null,
+          "share": null
+        },
+        {
+          "name": "Lunch 12-15",
+          "sales": null,
+          "share": 40.9
+        },
+        {
+          "name": "Afternoon 15-18",
+          "sales": null,
+          "share": null
+        },
+        {
+          "name": "Evening 18+",
+          "sales": null,
+          "share": null
+        }
+      ],
+      "openingRule": "Keep 6:00am because cooking is onsite and early trade is more meaningful. If forced, 7:00-7:30am; do not move to 8:00am as normal setting.",
+      "todayFocus": "Protect early trade and review sold-out pattern. Keep execution simple and visible.",
+      "risk": "Sold-out mentions and early-trade loss risk if opening is pushed later.",
+      "managerPrompt": "Please confirm current stock, burger/combo readiness and whether any sold-out issue is still open.",
+      "ticketHistory": {
+        "store": "Taren Point",
+        "file": "HISTORY_TarenPointV1(7).csv",
+        "rows": 185991,
+        "dateRange": "2024-11-22 to 2026-06-12",
+        "latestDate": "2026-06-12",
+        "recentDailyAvgFromTicketHistory": 1268.63,
+        "recentTopProducts": [
+          {
+            "name": "Homer",
+            "qty": 637
+          },
+          {
+            "name": "Glazed",
+            "qty": 416
+          },
+          {
+            "name": "Chocolate Iced",
+            "qty": 365
+          },
+          {
+            "name": "Mnms",
+            "qty": 344
+          },
+          {
+            "name": "Pineapple",
+            "qty": 336
+          },
+          {
+            "name": "Cinnamon",
+            "qty": 328
+          },
+          {
+            "name": "Special",
+            "qty": 320
+          },
+          {
+            "name": "Nutella",
+            "qty": 319
+          },
+          {
+            "name": "Vanilla Slice",
+            "qty": 317
+          },
+          {
+            "name": "Caramel Iced",
+            "qty": 312
+          }
+        ],
+        "recentTopCategories": [
+          {
+            "name": "Traditional",
+            "qty": 4695
+          },
+          {
+            "name": "Gourmet",
+            "qty": 2872
+          },
+          {
+            "name": "Beverage",
+            "qty": 329
+          }
+        ],
+        "recentTopHours": [
+          {
+            "hour": "12:00",
+            "sales": 5941
+          },
+          {
+            "hour": "13:00",
+            "sales": 5801
+          },
+          {
+            "hour": "11:00",
+            "sales": 5583
+          },
+          {
+            "hour": "10:00",
+            "sales": 5109
+          },
+          {
+            "hour": "14:00",
+            "sales": 4352
+          }
+        ],
+        "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+      },
+      "openActions": 8
     },
     {
-      id: "friedas_pies",
-      name: "Frieda’s Pies",
-      status: "Amber",
-      sales: 40731,
-      focus: "Review pie production against actual movement.",
-      notes: "Square sales layer and production planning need validation."
+      "id": "fp",
+      "name": "Frieda's Pies",
+      "rag": "Amber",
+      "role": "Linked pie operation and bake-planning unit",
+      "recentAvgDay": null,
+      "fullPeriodAvgDay": null,
+      "primaryWindow": "Bake plan / leftover-led",
+      "primaryWindowShare": null,
+      "topHours": [],
+      "dayparts": [],
+      "openingRule": "Use smart plan and daily leftovers to set net bake. Treat trend as planning signal, not hourly store analysis.",
+      "todayFocus": "Confirm leftover counts before baking and keep Beef & Cheese, Chunky Beef Cheese and Garlic Naan protected.",
+      "risk": "Without leftover inputs, net bake cannot be trusted.",
+      "managerPrompt": "Please send leftover photo/count before bake and confirm top pie shortages.",
+      "openActions": 4
     }
   ],
-  actions: [
+  "ticketHistory": {
+    "Beverly Hills": {
+      "store": "Beverly Hills",
+      "file": "HISTORY_BeverlyHillsV1(7).csv",
+      "rows": 449246,
+      "dateRange": "2023-10-02 to 2026-06-12",
+      "latestDate": "2026-06-12",
+      "recentDailyAvgFromTicketHistory": 5120.89,
+      "recentTopProducts": [
+        {
+          "name": "Special",
+          "qty": 2970
+        },
+        {
+          "name": "Homer",
+          "qty": 2430
+        },
+        {
+          "name": "Glazed",
+          "qty": 1886
+        },
+        {
+          "name": "Mnms",
+          "qty": 1352
+        },
+        {
+          "name": "Boston Creme",
+          "qty": 1334
+        },
+        {
+          "name": "Nutella",
+          "qty": 1296
+        },
+        {
+          "name": "Chocolate Iced",
+          "qty": 1210
+        },
+        {
+          "name": "Pineapple",
+          "qty": 1167
+        },
+        {
+          "name": "Cream Finger Bun",
+          "qty": 1089
+        },
+        {
+          "name": "Cinnamon Scroll",
+          "qty": 1001
+        }
+      ],
+      "recentTopCategories": [
+        {
+          "name": "Traditional",
+          "qty": 15548
+        },
+        {
+          "name": "Gourmet",
+          "qty": 13656
+        },
+        {
+          "name": "Beverage",
+          "qty": 1063
+        }
+      ],
+      "recentTopHours": [
+        {
+          "hour": "13:00",
+          "sales": 17461
+        },
+        {
+          "hour": "14:00",
+          "sales": 17174
+        },
+        {
+          "hour": "12:00",
+          "sales": 16899
+        },
+        {
+          "hour": "16:00",
+          "sales": 15527
+        },
+        {
+          "hour": "11:00",
+          "sales": 14947
+        }
+      ],
+      "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+    },
+    "Penrith": {
+      "store": "Penrith",
+      "file": "HISTORY_PenrithV1(7).csv",
+      "rows": 202290,
+      "dateRange": "2025-09-18 to 2026-06-12",
+      "latestDate": "2026-06-12",
+      "recentDailyAvgFromTicketHistory": 2983.85,
+      "recentTopProducts": [
+        {
+          "name": "Special",
+          "qty": 1354
+        },
+        {
+          "name": "Homer",
+          "qty": 1189
+        },
+        {
+          "name": "Glazed",
+          "qty": 955
+        },
+        {
+          "name": "Mnms",
+          "qty": 890
+        },
+        {
+          "name": "Boston Creme",
+          "qty": 852
+        },
+        {
+          "name": "Vanilla Slice",
+          "qty": 803
+        },
+        {
+          "name": "Pineapple",
+          "qty": 758
+        },
+        {
+          "name": "Nutella",
+          "qty": 704
+        },
+        {
+          "name": "Banana Custard",
+          "qty": 643
+        },
+        {
+          "name": "Cinnamon Scroll",
+          "qty": 587
+        }
+      ],
+      "recentTopCategories": [
+        {
+          "name": "Traditional",
+          "qty": 10028
+        },
+        {
+          "name": "Gourmet",
+          "qty": 7964
+        },
+        {
+          "name": "Beverage",
+          "qty": 520
+        }
+      ],
+      "recentTopHours": [
+        {
+          "hour": "15:00",
+          "sales": 10110
+        },
+        {
+          "hour": "16:00",
+          "sales": 9392
+        },
+        {
+          "hour": "14:00",
+          "sales": 9169
+        },
+        {
+          "hour": "13:00",
+          "sales": 9105
+        },
+        {
+          "hour": "12:00",
+          "sales": 8273
+        }
+      ],
+      "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+    },
+    "Taren Point": {
+      "store": "Taren Point",
+      "file": "HISTORY_TarenPointV1(7).csv",
+      "rows": 185991,
+      "dateRange": "2024-11-22 to 2026-06-12",
+      "latestDate": "2026-06-12",
+      "recentDailyAvgFromTicketHistory": 1268.63,
+      "recentTopProducts": [
+        {
+          "name": "Homer",
+          "qty": 637
+        },
+        {
+          "name": "Glazed",
+          "qty": 416
+        },
+        {
+          "name": "Chocolate Iced",
+          "qty": 365
+        },
+        {
+          "name": "Mnms",
+          "qty": 344
+        },
+        {
+          "name": "Pineapple",
+          "qty": 336
+        },
+        {
+          "name": "Cinnamon",
+          "qty": 328
+        },
+        {
+          "name": "Special",
+          "qty": 320
+        },
+        {
+          "name": "Nutella",
+          "qty": 319
+        },
+        {
+          "name": "Vanilla Slice",
+          "qty": 317
+        },
+        {
+          "name": "Caramel Iced",
+          "qty": 312
+        }
+      ],
+      "recentTopCategories": [
+        {
+          "name": "Traditional",
+          "qty": 4695
+        },
+        {
+          "name": "Gourmet",
+          "qty": 2872
+        },
+        {
+          "name": "Beverage",
+          "qty": 329
+        }
+      ],
+      "recentTopHours": [
+        {
+          "hour": "12:00",
+          "sales": 5941
+        },
+        {
+          "hour": "13:00",
+          "sales": 5801
+        },
+        {
+          "hour": "11:00",
+          "sales": 5583
+        },
+        {
+          "hour": "10:00",
+          "sales": 5109
+        },
+        {
+          "hour": "14:00",
+          "sales": 4352
+        }
+      ],
+      "dataCaveat": "Ticket history is used for shape/product signal only. Product-sales exports should remain the source of truth for final dollars."
+    }
+  },
+  "production": {
+    "weekLabel": "15 to 21 June",
+    "source": "LADonuts_Production_Jun15_to_Jun21_v94_SingleTotal(1).xlsx",
+    "laDonutsTotal": 20600,
+    "byStore": [
+      {
+        "store": "Beverly Hills",
+        "totalPlan": 11050
+      },
+      {
+        "store": "Penrith",
+        "totalPlan": 6680
+      },
+      {
+        "store": "Taren Point",
+        "totalPlan": 2870
+      }
+    ],
+    "topProductsByStore": {
+      "Beverly Hills": [
+        {
+          "product": "Specials Total",
+          "totalPlan": 1096
+        },
+        {
+          "product": "Homer",
+          "totalPlan": 924
+        },
+        {
+          "product": "Cream Finger Bun",
+          "totalPlan": 840
+        },
+        {
+          "product": "Glaze",
+          "totalPlan": 777
+        },
+        {
+          "product": "M&M",
+          "totalPlan": 568
+        },
+        {
+          "product": "Boston",
+          "totalPlan": 558
+        },
+        {
+          "product": "Nutella",
+          "totalPlan": 495
+        },
+        {
+          "product": "Choc",
+          "totalPlan": 489
+        }
+      ],
+      "Penrith": [
+        {
+          "product": "Homer",
+          "totalPlan": 485
+        },
+        {
+          "product": "Specials Total",
+          "totalPlan": 478
+        },
+        {
+          "product": "M&M",
+          "totalPlan": 393
+        },
+        {
+          "product": "Glaze",
+          "totalPlan": 384
+        },
+        {
+          "product": "Boston",
+          "totalPlan": 378
+        },
+        {
+          "product": "Vanilla Slice",
+          "totalPlan": 306
+        },
+        {
+          "product": "Nutella",
+          "totalPlan": 306
+        },
+        {
+          "product": "Pineapple",
+          "totalPlan": 288
+        }
+      ],
+      "Taren Point": [
+        {
+          "product": "Homer",
+          "totalPlan": 236
+        },
+        {
+          "product": "Glaze",
+          "totalPlan": 188
+        },
+        {
+          "product": "Specials Total",
+          "totalPlan": 182
+        },
+        {
+          "product": "Biscoff Cream",
+          "totalPlan": 154
+        },
+        {
+          "product": "Choc",
+          "totalPlan": 150
+        },
+        {
+          "product": "Nutella",
+          "totalPlan": 149
+        },
+        {
+          "product": "M&M",
+          "totalPlan": 145
+        },
+        {
+          "product": "Boston",
+          "totalPlan": 137
+        }
+      ]
+    },
+    "cookByShape": [
+      {
+        "shape": "RING",
+        "totalCook": 13961
+      },
+      {
+        "shape": "BALL",
+        "totalCook": 3716
+      },
+      {
+        "shape": "LONG",
+        "totalCook": 1447
+      },
+      {
+        "shape": "SCROLL",
+        "totalCook": 806
+      },
+      {
+        "shape": "APPLE",
+        "totalCook": 670
+      }
+    ],
+    "friedasPies": {
+      "weekLabel": "15 to 21 June",
+      "totalTarget": 3860,
+      "forecastGrossSales": 29839,
+      "topProducts": [
+        {
+          "product": "Beef & Cheese",
+          "targetBake": 1370
+        },
+        {
+          "product": "Chunky Beef Cheese",
+          "targetBake": 673
+        },
+        {
+          "product": "Garlic Naan",
+          "targetBake": 375
+        },
+        {
+          "product": "Beef Pie ",
+          "targetBake": 264
+        },
+        {
+          "product": "Chilli And Cheese",
+          "targetBake": 241
+        },
+        {
+          "product": "Mushroom Beef",
+          "targetBake": 241
+        },
+        {
+          "product": "Sausage Roll",
+          "targetBake": 234
+        },
+        {
+          "product": "Chicken Satay",
+          "targetBake": 145
+        }
+      ],
+      "planningStance": "Strong pie demand; anomalies/near-closed days excluded from baseline."
+    }
+  },
+  "whatsapp": {
+    "summaries": [
+      {
+        "store": "Beverly Hills",
+        "file": "WhatsApp Chat with LA Donuts BH (reporting) (7).zip",
+        "messages": 52,
+        "mediaFiles": 47,
+        "signalCounts": {
+          "equipment": 47,
+          "photo_update": 12,
+          "production": 2,
+          "staff": 2,
+          "stockout": 2
+        },
+        "highlights": [
+          {
+            "date": "6/10/26",
+            "category": "production",
+            "text": "@staff @staff should we finish off these blanks?"
+          },
+          {
+            "date": "6/11/26",
+            "category": "stockout",
+            "text": "Sold out 7pm"
+          }
+        ],
+        "summary": "52 text messages and 47 media files imported. Main signals: equipment 47, photo_update 12, production 2"
+      },
+      {
+        "store": "Penrith",
+        "file": "WhatsApp penrith (2).zip",
+        "messages": 409,
+        "mediaFiles": 379,
+        "signalCounts": {
+          "equipment": 385,
+          "photo_update": 80,
+          "staff": 8,
+          "cleanliness": 5,
+          "stockout": 1,
+          "production": 2
+        },
+        "highlights": [
+          {
+            "date": "4/21/26",
+            "category": "photo_update",
+            "text": "11 am Update, Zaineb, Judith, Dona"
+          },
+          {
+            "date": "4/22/26",
+            "category": "photo_update",
+            "text": "Can someone take a mad photo of the display so I can put it on socials?"
+          },
+          {
+            "date": "4/22/26",
+            "category": "cleanliness",
+            "text": "Hi Frida, do you want a photo of both displays or just one? \u263a\ufe0f <This message was edited>"
+          },
+          {
+            "date": "4/23/26",
+            "category": "photo_update",
+            "text": "10 am update Judith, Kelly, Nilo"
+          },
+          {
+            "date": "4/23/26",
+            "category": "cleanliness",
+            "text": "#Penrith,the milk wand is coated with  milk,assure at all times clean the wand. Thanks"
+          },
+          {
+            "date": "4/24/26",
+            "category": "stockout",
+            "text": "Hello team, we sold out of donuts in Penrith yesterday at 9:30 PM because the closing shift didn't have enough time to defrost and make more. Normally, we advise against making donuts late (7-8pm) in the day if it's slow, but if you notice "
+          },
+          {
+            "date": "4/26/26",
+            "category": "production",
+            "text": "@staff @ Donna,please Woolloomooloo needs a clean.all lids are to be wiped and shelving. Plus nightshirt are to restock all boxes gloves drinks coffee cups lids. If you are short of stock,order through email. Any questions  0413211452 anyti"
+          },
+          {
+            "date": "4/26/26",
+            "category": "cleanliness",
+            "text": "Also coffee is set to 6.4 and making lots of mess with overflow?"
+          }
+        ],
+        "summary": "409 text messages and 379 media files imported. Main signals: equipment 385, photo_update 80, staff 8"
+      },
+      {
+        "store": "Taren Point",
+        "file": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip",
+        "messages": 58,
+        "mediaFiles": 51,
+        "signalCounts": {
+          "equipment": 53,
+          "stockout": 5,
+          "photo_update": 14,
+          "staff": 11,
+          "production": 1,
+          "cleanliness": 1
+        },
+        "highlights": [
+          {
+            "date": "6/2/26",
+            "category": "stockout",
+            "text": "<Media omitted> SOLD OUT 1:35pm"
+          },
+          {
+            "date": "6/3/26",
+            "category": "production",
+            "text": "!! whoever is on friday opening, we have 2 orders of Teaser boxes. both pick up at 8am. one order has 1 teaser box and the other has an order for 8. please let kitchen staff know asap. i have let them know what is happening. thank you!!"
+          },
+          {
+            "date": "6/10/26",
+            "category": "photo_update",
+            "text": "Hey guys from now on if there\u2019s allot of donuts left over from taren point I must be notified by 4pm and I\u2019ll get them picked up to go to Beverly Hills store"
+          },
+          {
+            "date": "6/11/26",
+            "category": "photo_update",
+            "text": "no photos today?"
+          }
+        ],
+        "summary": "58 text messages and 51 media files imported. Main signals: equipment 53, photo_update 14, staff 11"
+      },
+      {
+        "store": "Frieda's Pies",
+        "file": "WhatsApp Chat with Pie Shop Sales (4).zip",
+        "messages": 100,
+        "mediaFiles": 29,
+        "signalCounts": {
+          "equipment": 29,
+          "photo_update": 16,
+          "stockout": 3
+        },
+        "highlights": [
+          {
+            "date": "4/25/26",
+            "category": "photo_update",
+            "text": "<Media omitted> 25th april leftovers"
+          },
+          {
+            "date": "4/26/26",
+            "category": "photo_update",
+            "text": "<Media omitted> 26th April leftovers"
+          },
+          {
+            "date": "5/3/26",
+            "category": "photo_update",
+            "text": "<Media omitted> 3rd may left @staff"
+          },
+          {
+            "date": "5/4/26",
+            "category": "stockout",
+            "text": "4th May no leftovers sold out @staff"
+          },
+          {
+            "date": "5/9/26",
+            "category": "photo_update",
+            "text": "<Media omitted> 9th may leftovers"
+          },
+          {
+            "date": "5/16/26",
+            "category": "stockout",
+            "text": "16th may no leftovers sold out @staff"
+          },
+          {
+            "date": "5/24/26",
+            "category": "stockout",
+            "text": "24th may no leftovers sold out @staff"
+          }
+        ],
+        "summary": "100 text messages and 29 media files imported. Main signals: equipment 29, photo_update 16, stockout 3"
+      }
+    ],
+    "actions": [
+      {
+        "id": "WA-001",
+        "store": "Beverly Hills",
+        "severity": "Red",
+        "category": "Production",
+        "summary": "Beverly Hills: review reserve / blanks process after low closing stock",
+        "evidence": "@staff @staff should we finish off these blanks?",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA Donuts BH (reporting) (7).zip"
+      },
+      {
+        "id": "WA-002",
+        "store": "Beverly Hills",
+        "severity": "Amber",
+        "category": "Equipment",
+        "summary": "Beverly Hills: check equipment left on after close",
+        "evidence": "IMG-20260610-WA0155.jpg (file attached) Ac left on",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA Donuts BH (reporting) (7).zip"
+      },
+      {
+        "id": "WA-003",
+        "store": "Beverly Hills",
+        "severity": "Red",
+        "category": "Production",
+        "summary": "Beverly Hills: review reserve / blanks process after low closing stock",
+        "evidence": "IMG-20260610-WA0156.jpg (file attached) Why were these donuts not made if this is all you have left surely they could of been sold . Having 4 donuts left proves we needed more . We send extra donuts so they can be made",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA Donuts BH (reporting) (7).zip"
+      },
+      {
+        "id": "WA-004",
+        "store": "Beverly Hills",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Beverly Hills: sold-out mention needs production review",
+        "evidence": "Sold out 7pm",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA Donuts BH (reporting) (7).zip"
+      },
+      {
+        "id": "WA-005",
+        "store": "Penrith",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Penrith: sold-out mention needs production review",
+        "evidence": "Hello team, we sold out of donuts in Penrith yesterday at 9:30 PM because the closing shift didn't have enough time to defrost and make more. Normally, we advise against making donuts late (7-8pm) in the day if it's slow, but if you notice customers coming in ",
+        "status": "Open",
+        "source": "WhatsApp penrith (2).zip"
+      },
+      {
+        "id": "WA-006",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Taren Point: sold-out mention needs production review",
+        "evidence": "<Media omitted> SOLD OUT 1:35pm",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-007",
+        "store": "Taren Point",
+        "severity": "Amber",
+        "category": "Pre-order",
+        "summary": "Taren Point: confirm pre-order handoff to kitchen",
+        "evidence": "!! whoever is on friday opening, we have 2 orders of Teaser boxes. both pick up at 8am. one order has 1 teaser box and the other has an order for 8. please let kitchen staff know asap. i have let them know what is happening. thank you!!",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-008",
+        "store": "Taren Point",
+        "severity": "Amber",
+        "category": "Cleanliness",
+        "summary": "Taren Point: cleanliness / rubbish follow-up",
+        "evidence": "IMG-20260611-WA0134.jpg (file attached) Hey guys clean up and throw your rubbish how many people have walked past this and done nothing",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-009",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Taren Point: sold-out mention needs production review",
+        "evidence": "IMG-20260611-WA0107.jpg (file attached) SOLD OUT 4:22pm",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-010",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Taren Point: sold-out mention needs production review",
+        "evidence": "IMG-20260611-WA0130.jpg (file attached) SOLD OUT",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-011",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Taren Point: sold-out mention needs production review",
+        "evidence": "IMG-20260611-WA0127.jpg (file attached) SOLD OUT",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-012",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Taren Point: sold-out mention needs production review",
+        "evidence": "IMG-20260611-WA0120.jpg (file attached) SOLD OUT 2:53",
+        "status": "Open",
+        "source": "WhatsApp Chat with LA DONUT TP (reporting) (12).zip"
+      },
+      {
+        "id": "WA-013",
+        "store": "Frieda's Pies",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Frieda's Pies: sold-out mention needs production review",
+        "evidence": "4th May no leftovers sold out @staff",
+        "status": "Open",
+        "source": "WhatsApp Chat with Pie Shop Sales (4).zip"
+      },
+      {
+        "id": "WA-014",
+        "store": "Frieda's Pies",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Frieda's Pies: sold-out mention needs production review",
+        "evidence": "16th may no leftovers sold out @staff",
+        "status": "Open",
+        "source": "WhatsApp Chat with Pie Shop Sales (4).zip"
+      },
+      {
+        "id": "WA-015",
+        "store": "Frieda's Pies",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Frieda's Pies: sold-out mention needs production review",
+        "evidence": "24th may no leftovers sold out @staff",
+        "status": "Open",
+        "source": "WhatsApp Chat with Pie Shop Sales (4).zip"
+      },
+      {
+        "id": "OPS-001",
+        "store": "Beverly Hills",
+        "severity": "Red",
+        "category": "Production",
+        "summary": "Protect lunch and early afternoon reserve before cabinet becomes thin.",
+        "evidence": "Peak window is 12:00-16:00; BH is the scale-sensitive store.",
+        "status": "Open",
+        "source": "Peak-times analysis"
+      },
+      {
+        "id": "OPS-002",
+        "store": "Penrith",
+        "severity": "Amber",
+        "category": "Cabinet",
+        "summary": "Check cabinet strength before 15:00-18:00 afternoon peak.",
+        "evidence": "Penrith is afternoon-led, with strongest hours at 15:00-18:00.",
+        "status": "Open",
+        "source": "Peak-times analysis"
+      },
+      {
+        "id": "OPS-003",
+        "store": "Taren Point",
+        "severity": "Red",
+        "category": "Stockout",
+        "summary": "Review recent sold-out mentions and keep early pie/coffee trade protected.",
+        "evidence": "WhatsApp export contains multiple SOLD OUT mentions; opening-hours rule says keep 6:00am.",
+        "status": "Open",
+        "source": "WhatsApp + opening-hours diagnostic"
+      },
+      {
+        "id": "OPS-004",
+        "store": "Frieda's Pies",
+        "severity": "Amber",
+        "category": "Planning",
+        "summary": "Confirm leftover counts before daily bake so the smart plan produces net bake.",
+        "evidence": "Frieda\u2019s Pies smart plan has leftover field before baking.",
+        "status": "Open",
+        "source": "Frieda pies smart plan"
+      }
+    ]
+  },
+  "market": {
+    "boardPack": {
+      "competitorsTracked": 16,
+      "averageDataCompleteness": 84.0,
+      "topComparisonBrand": "The Grounds",
+      "biggestDirectThreat": "Daddy Donuts",
+      "method": "Instagram-first weekly board pack. Instagram is primary lens; Google, website and delivery data validate commercial structure."
+    },
+    "topCompetitors": [
+      {
+        "name": "The Grounds",
+        "category": "Inspiration",
+        "score": 62.0,
+        "why": "Active Instagram cadence, premium positioning, beverage attachment, bundle/pack logic and office/catering visibility."
+      },
+      {
+        "name": "Krispy Kreme Penrith",
+        "category": "Direct",
+        "score": 60.4,
+        "why": "Direct Penrith threat with premium/indulgent cues and bundle/pack logic."
+      },
+      {
+        "name": "OMG! Decadent Donuts Penrith",
+        "category": "Direct",
+        "score": 57.3,
+        "why": "Direct Penrith threat with beverage attachment, bundles and convenience visibility."
+      },
+      {
+        "name": "Boston Doughnuts",
+        "category": "Premium",
+        "score": 56.4,
+        "why": "Visible competitor with loaded product impact, box pricing and social reach."
+      },
+      {
+        "name": "Daddy Donuts",
+        "category": "Direct",
+        "score": 51.5,
+        "why": "Direct threat with indulgent positioning and bundle logic."
+      }
+    ],
+    "opportunities": [
+      {
+        "priority": "High",
+        "title": "Build recipe/process-led Instagram content system",
+        "score": 56.9,
+        "action": "Capture fill-shot, glaze pour and tray merchandising reels weekly."
+      },
+      {
+        "priority": "Medium",
+        "title": "Own vegan/dietary niche visibility",
+        "score": 45.7,
+        "action": "Dedicated shelf strip, vegan highlight and a hero vegan filled product."
+      },
+      {
+        "priority": "Medium",
+        "title": "Strengthen bundle / box architecture",
+        "score": 40.9,
+        "action": "Promote 6-pack classics, mixed premium, 12-pack office box and weekend family box."
+      },
+      {
+        "priority": "High",
+        "title": "Improve display discipline and hero product architecture",
+        "score": 52.0,
+        "action": "Use Hero 6 range, fuller displays and register bundle scripts."
+      }
+    ],
+    "guardrail": "Competitor facts are public-source only; profitability and stress are inference only, not verified facts."
+  },
+  "candidates": [
     {
-      store: "Beverly Hills",
-      priority: "Amber",
-      action: "Confirm cabinet photo before lunch and protect premium display."
+      "id": "C-001",
+      "name": "Sarah M.",
+      "store": "Penrith",
+      "role": "Front of house",
+      "score": 87,
+      "risk": "Green",
+      "recommendation": "HIRE",
+      "summary": "Full weekend availability, own transport, 2 years cafe experience, strong communication.",
+      "flags": [
+        "Own transport",
+        "Weekend availability",
+        "Lives within 15 minutes"
+      ],
+      "questions": [
+        "Tell me about a busy cafe shift you handled.",
+        "How would you upsell a 6-pack without being pushy?",
+        "What is your plan to arrive reliably for early shifts?"
+      ]
     },
     {
-      store: "Penrith",
-      priority: "Green",
-      action: "Check afternoon top-up before 3pm."
+      "id": "C-002",
+      "name": "James K.",
+      "store": "Penrith",
+      "role": "Front of house",
+      "score": 71,
+      "risk": "Amber",
+      "recommendation": "MAYBE",
+      "summary": "Good service experience but two short tenures need interview check.",
+      "flags": [
+        "Recent short tenure",
+        "Good availability"
+      ],
+      "questions": [
+        "You have had two roles in 12 months. What would make this one stick?",
+        "A customer says the box is missing one donut. What do you do?",
+        "How do you handle a Friday rush?"
+      ]
     },
     {
-      store: "Taren Point",
-      priority: "Amber",
-      action: "Confirm early stock and coffee/pie readiness."
+      "id": "C-003",
+      "name": "Priya R.",
+      "store": "Beverly Hills",
+      "role": "Junior crew",
+      "score": 68,
+      "risk": "Amber",
+      "recommendation": "MAYBE",
+      "summary": "Warm communication and weekend availability; limited food service experience.",
+      "flags": [
+        "Limited food experience",
+        "Strong attitude"
+      ],
+      "questions": [
+        "What does good customer service look like to you?",
+        "How would you learn a new SOP quickly?",
+        "What would you do if the cabinet was becoming thin?"
+      ]
     },
     {
-      store: "Frieda’s Pies",
-      priority: "Amber",
-      action: "Compare bake plan with yesterday’s sales and leftover position."
+      "id": "C-004",
+      "name": "Dan W.",
+      "store": "Taren Point",
+      "role": "All-rounder",
+      "score": 41,
+      "risk": "Red",
+      "recommendation": "PASS",
+      "summary": "Cannot work key weekend periods and has uncertain transport.",
+      "flags": [
+        "No Friday/Saturday peak availability",
+        "Transport risk"
+      ],
+      "questions": [
+        "What availability could you commit to reliably?"
+      ]
     }
   ],
-  briefing: [
-    "Beverly Hills is the main sales engine today; protect lunch and early afternoon availability.",
-    "Penrith is stable but should watch the 15:00-18:00 window.",
-    "Taren Point needs early trade and lunch readiness checked.",
-    "Frieda’s Pies should review production against Square sales and leftover signals.",
-    "WhatsApp actions should be checked before the lunch peak."
+  "sops": [
+    {
+      "id": "SOP-THICKSHAKE",
+      "title": "Thickshake SOP",
+      "tags": [
+        "thickshake",
+        "milkshake",
+        "beverage",
+        "drink"
+      ],
+      "store": "All stores",
+      "steps": [
+        "Add 3 scoops of ice cream to the blender cup.",
+        "Pour 100ml full cream milk.",
+        "Add 30ml flavour syrup for regular.",
+        "Blend on HIGH for 20 seconds.",
+        "Pour into chilled cup, fill to 1cm below rim.",
+        "Cap and label with flavour sticker.",
+        "Target time: under 90 seconds."
+      ],
+      "status": "Draft - needs Freda approval"
+    },
+    {
+      "id": "SOP-CABINET",
+      "title": "Cabinet display standard",
+      "tags": [
+        "cabinet",
+        "display",
+        "presentation",
+        "donuts"
+      ],
+      "store": "All stores",
+      "steps": [
+        "Front row must look full before trade.",
+        "Keep classics visible and evenly spaced.",
+        "No obvious gaps during peak windows.",
+        "Remove donuts with glaze cracks or quality issues.",
+        "Clean cabinet glass before opening and after lunch rush.",
+        "Send reference photo when requested."
+      ],
+      "status": "Draft - needs Freda approval"
+    },
+    {
+      "id": "SOP-BH-RESERVE",
+      "title": "Beverly Hills reserve release",
+      "tags": [
+        "beverly hills",
+        "reserve",
+        "lunch",
+        "production"
+      ],
+      "store": "Beverly Hills",
+      "steps": [
+        "Check cabinet before 11:00am.",
+        "Release top-up reserve before 12:00pm if cabinet is below target.",
+        "Protect 12:00-16:00 peak window.",
+        "Do not wait until cabinet is already thin.",
+        "Send 11am and 1pm photos to manager group."
+      ],
+      "status": "Beta operating rule"
+    },
+    {
+      "id": "SOP-PEN-PIE",
+      "title": "Penrith pie/combo lunch rule",
+      "tags": [
+        "penrith",
+        "pie",
+        "combo",
+        "lunch"
+      ],
+      "store": "Penrith",
+      "steps": [
+        "Keep pie/combo signage visible before lunch.",
+        "Confirm pie availability before 12:00pm.",
+        "Offer pie combo from $15 including one classic donut where applicable.",
+        "Check cabinet strength again before 3:00pm.",
+        "Flag shortages immediately."
+      ],
+      "status": "Draft - needs Freda approval"
+    },
+    {
+      "id": "SOP-TP-BURGER",
+      "title": "Taren Point burger/combo rule",
+      "tags": [
+        "taren point",
+        "burger",
+        "combo",
+        "lunch",
+        "no pork"
+      ],
+      "store": "Taren Point",
+      "steps": [
+        "Use store-specific lunch board.",
+        "No pork or pig-derived products.",
+        "Burger combo from $15 includes one classic donut.",
+        "Protect early trade and onsite cooking readiness.",
+        "Report sold-out risk immediately."
+      ],
+      "status": "Draft - needs Freda approval"
+    },
+    {
+      "id": "SOP-CLOSE",
+      "title": "Closing checklist",
+      "tags": [
+        "closing",
+        "cleaning",
+        "close"
+      ],
+      "store": "All stores",
+      "steps": [
+        "Send closing cabinet/leftover photos.",
+        "Clean FOH and cabinet glass.",
+        "Switch off equipment according to manager list.",
+        "Check air conditioning and lights.",
+        "Record waste/leftovers.",
+        "Escalate anything unresolved before leaving."
+      ],
+      "status": "Draft - needs Freda approval"
+    }
   ],
-  questions: [
-    "What needs my attention today?",
-    "Which store is underperforming?",
-    "Show me open actions.",
-    "Draft a message to the Taren Point manager.",
-    "What should Beverly Hills protect today?"
-  ]
-};
+  "trainingModules": [
+    {
+      "code": "TM-01",
+      "title": "Food Safety & Hygiene",
+      "tier": "T1 Foundation",
+      "status": "Draft",
+      "completion": 82,
+      "due": "Food safety failures escalate to manager"
+    },
+    {
+      "code": "TM-02",
+      "title": "Brand Standards & Presentation",
+      "tier": "T1 Foundation",
+      "status": "Draft",
+      "completion": 76,
+      "due": "Photo examples needed from Nicolas"
+    },
+    {
+      "code": "TM-05",
+      "title": "Milkshake & Thickshake",
+      "tier": "T2 Core Craft",
+      "status": "Draft",
+      "completion": 64,
+      "due": "Needs final prices and video/photos"
+    },
+    {
+      "code": "TM-08",
+      "title": "Upsell & AOV",
+      "tier": "T2 Core Craft",
+      "status": "Mock",
+      "completion": 55,
+      "due": "Use bundle scripts"
+    },
+    {
+      "code": "TM-STORE",
+      "title": "Store-specific lunch rules",
+      "tier": "T2 Core Craft",
+      "status": "Draft",
+      "completion": 48,
+      "due": "Freda approval required"
+    }
+  ],
+  "audits": [
+    {
+      "id": "AUD-001",
+      "store": "Beverly Hills",
+      "type": "Opening",
+      "score": 7,
+      "rag": "Amber",
+      "comment": "Cabinet photo required before lunch reserve release.",
+      "status": "Open"
+    },
+    {
+      "id": "AUD-002",
+      "store": "Penrith",
+      "type": "Opening",
+      "score": 8,
+      "rag": "Green",
+      "comment": "Afternoon cabinet check still needed.",
+      "status": "Open"
+    },
+    {
+      "id": "AUD-003",
+      "store": "Taren Point",
+      "type": "Opening",
+      "score": 5,
+      "rag": "Amber",
+      "comment": "Sold-out risk and cleanliness follow-up.",
+      "status": "Open"
+    }
+  ],
+  "sourceStatus": [
+    {
+      "source": "Reporting.site POS live sync",
+      "status": "Beta 0.2 connector ready",
+      "confidence": "High once REPORTING_PHPSESSID is configured",
+      "notes": "Server can fetch dashboard.php, eod_summary.php, product_sales_summary.php, product_sales.php, ticket_sales.php and busy_hours.php for Beverly Hills, Penrith and Taren Point."
+    },
+    {
+      "source": "Uber Eats sales",
+      "status": "Manual snapshot / export now",
+      "confidence": "Medium",
+      "notes": "Uber uses Google login. Beta supports manual snapshot/API capture and keeps Uber separate from POS so revenue is not missed."
+    },
+    {
+      "source": "Square / Frieda's Pies",
+      "status": "Manual snapshot / Square API token now",
+      "confidence": "Medium-High with exports",
+      "notes": "Use Square export or API token. Password-based dashboard scraping is not used in the beta."
+    },
+    {
+      "source": "WhatsApp reporting groups",
+      "status": "ZIP/TXT import ready",
+      "confidence": "Medium",
+      "notes": "Imports exported chats and extracts stock, staff, photo, cleaning, closing, equipment and manager follow-up signals."
+    },
+    {
+      "source": "Production plans / cook sheets",
+      "status": "Seeded from uploaded files",
+      "confidence": "High",
+      "notes": "Used to compare live sales pressure with plan and production risk."
+    },
+    {
+      "source": "Hiring / Training / Audit modules",
+      "status": "Working structure with demo data",
+      "confidence": "Demo",
+      "notes": "Replace with real SOPs, job roles and reference photos later."
+    }
+  ],
+  "liveConnectors": {
+    "reportingSite": {
+      "status": "ready_for_secure_env",
+      "baseUrl": "https://reporting.site",
+      "auth": "REPORTING_PHPSESSID or REPORTING_COOKIE in server/.env",
+      "stores": [
+        {
+          "id": "bh",
+          "name": "Beverly Hills",
+          "slug": "ladonuts_beverlyhills"
+        },
+        {
+          "id": "pen",
+          "name": "Penrith",
+          "slug": "ladonuts_penrith"
+        },
+        {
+          "id": "tp",
+          "name": "Taren Point",
+          "slug": "ladonuts_tarenpoint"
+        }
+      ],
+      "views": [
+        "dashboard.php",
+        "eod_summary.php",
+        "product_sales_summary.php",
+        "product_sales.php",
+        "ticket_sales.php",
+        "busy_hours.php"
+      ]
+    },
+    "uberEats": {
+      "status": "manual_or_export_until_google_oauth",
+      "url": "https://merchants.ubereats.com/manager/home/503ef13c-4f47-4581-acdf-2179564db004/analytics/sales-v2?dateRange=this_week",
+      "note": "Uber sales are not in POS and must be added separately by upload, manual snapshot, or future OAuth/export workflow."
+    },
+    "square": {
+      "status": "manual_or_square_token",
+      "url": "https://app.squareup.com/dashboard/sales/transactions",
+      "note": "Frieda's Pies should use Square API token or exported transactions. Browser password scraping is not used."
+    },
+    "whatsapp": {
+      "status": "export_zip_ingestion",
+      "groups": [
+        "LA DONUTS PN (reporting)",
+        "LA Donuts BH (reporting)",
+        "LA DONUT TP (reporting)",
+        "Pie Shop Sales"
+      ],
+      "note": "Beta imports WhatsApp ZIP/TXT exports and turns them into action candidates; live WhatsApp Web scraping is intentionally avoided."
+    }
+  },
+  "liveSamples": {
+    "lastUpdated": "2026-06-14T09:35:00Z",
+    "source": "mixed screenshot samples: Penrith POS Today sample, Uber WTD screenshot samples, Square MTD/captured-period sample",
+    "reportingPOS": {
+      "Penrith": {
+        "period": "2026-06-14",
+        "totalSales": 4359.7,
+        "grossSales": 4271.0,
+        "netSales": 4259.7,
+        "orders": 193,
+        "eodOrders": 190,
+        "averageSpend": 22.59,
+        "cash": 592.5,
+        "card": 3667.2,
+        "online": 0,
+        "topCategory": "Gourmet Donuts",
+        "topCategoryRevenue": 2234.0,
+        "topProduct": "SPECIAL",
+        "topProductRevenue": 513.5,
+        "topProductQty": 79,
+        "sourceView": "reporting.site screenshot sample"
+      }
+    },
+    "uberEats": {
+      "Beverly Hills": {
+        "period": "this_week",
+        "sales": 6672.0,
+        "orders": 201,
+        "aov": 33.19,
+        "changeSalesPct": 64,
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+      },
+      "Penrith": {
+        "period": "this_week",
+        "sales": 2860.0,
+        "orders": 104,
+        "aov": 27.5,
+        "changeSalesPct": 21,
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+      },
+      "Taren Point": {
+        "period": "this_week",
+        "sales": 830.0,
+        "orders": 28,
+        "aov": 29.64,
+        "changeSalesPct": 73,
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+      }
+    },
+    "square": {
+      "Frieda's Pies": {
+        "period": "MTD Jun 2026",
+        "netSales": 40731.56,
+        "totalCollected": 40731.56,
+        "transactions": 1717,
+        "sourceView": "Square MTD dashboard screenshot sample"
+      }
+    }
+  }
+}
