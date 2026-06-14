@@ -1,0 +1,20 @@
+{
+  "name": "freda-ops-cockpit-server",
+  "version": "0.2.3",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "sync:reporting": "node scripts/refresh_reporting_live.mjs",
+    "check": "node --check server.js && node --check src/reportingConnector.js && node --check src/whatsappParser.js && node --check src/store.js"
+  },
+  "dependencies": {
+    "adm-zip": "^0.5.16",
+    "cheerio": "^1.0.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
