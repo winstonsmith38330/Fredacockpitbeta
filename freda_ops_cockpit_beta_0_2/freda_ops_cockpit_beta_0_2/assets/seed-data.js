@@ -1,4 +1,4 @@
-{
+window.FREDA_OPS_SEED = {
   "meta": {
     "appName": "Freda Ops Cockpit",
     "version": "Beta 0.2.3",
@@ -1911,4 +1911,4 @@
       ]
     }
   }
-}
+};
