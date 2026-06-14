@@ -1,17 +1,18 @@
 {
   "meta": {
     "appName": "Freda Ops Cockpit",
-    "version": "Beta 0.2.2",
-    "generatedAt": "2026-06-14T09:35:00Z",
-    "mode": "Live-sales capable prototype: reporting.site POS Today sync + Uber WTD/current-day manual capture labels + Square MTD/captured-period separation + WhatsApp export ingestion"
+    "version": "Beta 0.2.3",
+    "generatedAt": "2026-06-14T19:45:00Z",
+    "mode": "Freda feedback patch: hour-by-hour comparison, sell-out timing, balls/rings production mix, stock trip planner, leftover/sell-out tracker, training/hiring priorities, clearer POS/Uber/Square sync diagnostics."
   },
   "briefing": [
-    "Use reporting.site POS as Today sales when live sync succeeds; Penrith shown in seed data is a screenshot sample until confirmed by sync status.",
-    "Uber values from the current Uber screen are WTD because the page uses dateRange=this_week; only treat Uber as Today when a daily chart value is manually captured.",
-    "Frieda\u2019s Pies is Square-led; label it as Square MTD/captured period, not Uber.",
-    "Beverly Hills remains the volume engine; use live POS Today plus Uber WTD/daily context before changing production.",
-    "Taren Point needs early-trade protection and WhatsApp follow-up on stock/display signals.",
-    "WhatsApp action linking is still a next iteration; for now the beta validates the interface and action format."
+    "Treat this beta as an interface and operating-template validation until the POS/Uber/Square connectors are fully verified.",
+    "Freda wants hour-by-hour comparison against the same day last week and the last 4 weeks, especially to spot demand changes before sell-outs happen.",
+    "Sell-out timing matters: if a store sells out 3 hours earlier than last week, the assistant should surface it before the same issue repeats.",
+    "Production mix needs a balls/rings monitor because specials now use a high share of balls; seed assumption is around 65% balls for specials until confirmed by production data.",
+    "WhatsApp stock-order photos should become a weekly usage and delivery-trip planner, with stock sent in 2 planned trips instead of daily driver pressure.",
+    "Frieda\u2019s Pies momentum is real: recent NZ pie video/social lift should be tracked as a demand driver and linked to training and production readiness.",
+    "Hiring and training are now the biggest management priorities; the app should prioritize staff quality, onboarding and repeatable SOP execution."
   ],
   "stores": [
     {
@@ -1083,6 +1084,42 @@
     ],
     "actions": [
       {
+        "id": "FREDA-SELL-001",
+        "store": "All Stores",
+        "severity": "Amber",
+        "status": "Open",
+        "category": "Sell-out timing",
+        "summary": "Start tracking what time each store sells out and compare to same day last week / 4-week average. Flag if 3+ hours earlier than expected.",
+        "source": "Freda feedback"
+      },
+      {
+        "id": "FREDA-MIX-001",
+        "store": "Production",
+        "severity": "Amber",
+        "status": "Open",
+        "category": "Balls/rings mix",
+        "summary": "Confirm production mix for rings vs balls. Seed assumption: specials may need about 65% balls, so total donut count is not enough.",
+        "source": "Freda feedback"
+      },
+      {
+        "id": "FREDA-STOCK-001",
+        "store": "All Stores",
+        "severity": "Amber",
+        "status": "Open",
+        "category": "Stock trip planner",
+        "summary": "Use WhatsApp stock-order photos to estimate weekly usage and plan two stock trips instead of daily driver trips.",
+        "source": "Freda feedback"
+      },
+      {
+        "id": "FREDA-TRAIN-001",
+        "store": "All Stores",
+        "severity": "Red",
+        "status": "Open",
+        "category": "Training",
+        "summary": "Social/pie momentum means staff training must be consistent across stores; prioritize SOPs and onboarding.",
+        "source": "Freda feedback"
+      },
+      {
         "id": "WA-001",
         "store": "Beverly Hills",
         "severity": "Red",
@@ -1613,21 +1650,21 @@
   "sourceStatus": [
     {
       "source": "Reporting.site POS live sync",
-      "status": "Beta 0.2 connector ready",
+      "status": "Beta connector + diagnostic mode",
       "confidence": "High once REPORTING_PHPSESSID is configured",
-      "notes": "Server can fetch dashboard.php, eod_summary.php, product_sales_summary.php, product_sales.php, ticket_sales.php and busy_hours.php for Beverly Hills, Penrith and Taren Point."
+      "notes": "Server attempts to fetch reporting.site views; if pages load but KPIs are injected by JavaScript, use manual/browser capture until endpoint parsing is confirmed."
     },
     {
       "source": "Uber Eats sales",
-      "status": "Manual snapshot / export now",
+      "status": "WTD/manual daily capture",
       "confidence": "Medium",
-      "notes": "Uber uses Google login. Beta supports manual snapshot/API capture and keeps Uber separate from POS so revenue is not missed."
+      "notes": "Uber dashboard currently uses dateRange=this_week. App labels this as Uber WTD unless a daily chart value is entered manually."
     },
     {
       "source": "Square / Frieda's Pies",
-      "status": "Manual snapshot / Square API token now",
+      "status": "MTD/manual/export capture",
       "confidence": "Medium-High with exports",
-      "notes": "Use Square export or API token. Password-based dashboard scraping is not used in the beta."
+      "notes": "Frieda\u2019s Pies Square values are labelled as MTD/captured period unless a daily export/snapshot is entered."
     },
     {
       "source": "WhatsApp reporting groups",
@@ -1730,7 +1767,8 @@
         "orders": 201,
         "aov": 33.19,
         "changeSalesPct": 64,
-        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)",
+        "periodLabel": "WTD"
       },
       "Penrith": {
         "period": "this_week",
@@ -1738,7 +1776,8 @@
         "orders": 104,
         "aov": 27.5,
         "changeSalesPct": 21,
-        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)",
+        "periodLabel": "WTD"
       },
       "Taren Point": {
         "period": "this_week",
@@ -1746,7 +1785,8 @@
         "orders": 28,
         "aov": 29.64,
         "changeSalesPct": 73,
-        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)"
+        "sourceView": "Uber Eats WTD screenshot sample (dateRange=this_week)",
+        "periodLabel": "WTD"
       }
     },
     "square": {
@@ -1755,8 +1795,120 @@
         "netSales": 40731.56,
         "totalCollected": 40731.56,
         "transactions": 1717,
-        "sourceView": "Square MTD dashboard screenshot sample"
+        "sourceView": "Square MTD dashboard screenshot sample",
+        "periodLabel": "MTD/captured period"
       }
+    }
+  },
+  "fredaFeedback": {
+    "receivedAt": "2026-06-14T19:38:00+10:00",
+    "summary": "Freda likes the direction and wants the assistant to focus less on generic dashboards and more on early operational signals: hour-by-hour changes, sell-out timing, balls/rings production mix, stock ordering from WhatsApp photos, leftovers, first products to sell out, pie/social momentum, staffing, hiring and training.",
+    "priorityChanges": [
+      {
+        "area": "Sales timing",
+        "request": "Compare hour by hour to the same day last week and the last 4 weeks."
+      },
+      {
+        "area": "Sell-outs",
+        "request": "Detect when a store sells out earlier than normal, especially if it happens 3 hours earlier and repeats the next week."
+      },
+      {
+        "area": "Production mix",
+        "request": "Track whether ring vs ball distribution is wrong; specials may now require around 65% balls."
+      },
+      {
+        "area": "Stock supply",
+        "request": "Use WhatsApp photos/emails of needed stock to estimate weekly usage and plan 2 delivery trips instead of daily ad-hoc trips."
+      },
+      {
+        "area": "Leftovers",
+        "request": "Work out what is left over most often and what sells out first."
+      },
+      {
+        "area": "FOMO strategy",
+        "request": "Understand planned sell-outs are not always bad; last 4 weeks of controlled sell-out created demand/FOMO."
+      },
+      {
+        "area": "Pies/social",
+        "request": "Track viral NZ pie/social momentum as a real demand driver and protect pie execution."
+      },
+      {
+        "area": "Staffing",
+        "request": "Penrith structure: 8 part-time, 2 full-time, 10 casuals, including 5 young weekend decorators finishing production in 4 hours at about $340/day excluding super."
+      },
+      {
+        "area": "Training",
+        "request": "Momentum means staff must be properly trained in all stores."
+      },
+      {
+        "area": "Hiring",
+        "request": "Finding the right staff remains the biggest issue."
+      }
+    ],
+    "nextBuildItems": [
+      "hourly comparison engine",
+      "sell-out/leftover tracker",
+      "balls/rings mix monitor",
+      "stock trip planner",
+      "training/hiring focus dashboard",
+      "WhatsApp post/copy-to-manager flow"
+    ]
+  },
+  "operationsIntelligence": {
+    "hourlyComparison": {
+      "status": "Template ready; needs reliable hourly POS/ticket source or manual busy_hours capture.",
+      "views": [
+        "Today vs same weekday last week",
+        "Today vs last 4-week same-day average",
+        "Hour-by-hour variance",
+        "Peak-window risk flag"
+      ],
+      "alertRules": [
+        "Red if sales or sell-out timing is materially earlier than last week",
+        "Amber if current hour is materially above 4-week average and stock is not confirmed",
+        "Green if current hour is within normal range and stock photo confirmed"
+      ]
+    },
+    "sellOutTracker": {
+      "status": "Template ready; needs WhatsApp export/images plus POS sold-out records.",
+      "signals": [
+        "sold out time",
+        "products sold out first",
+        "hours earlier/later vs last week",
+        "planned FOMO vs operational failure",
+        "leftover count after close"
+      ],
+      "fomoRule": "Do not treat all sell-outs as negative. If sell-out is planned and close to end of day, mark as Strategic/Green; if 3+ hours early or repeated without production response, mark Amber/Red."
+    },
+    "ballsRingsMix": {
+      "status": "Seed rule added; needs production count actuals.",
+      "currentAssumption": "Specials may now require about 65% balls. Track ring/ball shortage separately rather than total donuts only.",
+      "alerts": [
+        "Amber if specials demand consumes ball reserve",
+        "Red if ball shortage appears in WhatsApp and specials are active",
+        "Ask production to confirm ball count before weekend"
+      ]
+    },
+    "stockTripPlanner": {
+      "status": "Template ready; needs WhatsApp stock photos/email capture and supplier stock list.",
+      "goal": "Estimate weekly stock usage and consolidate to two planned trips instead of daily driver runs.",
+      "outputs": [
+        "weekly usage by store",
+        "stockout-risk items",
+        "trip 1 pick list",
+        "trip 2 pick list",
+        "urgent exceptions"
+      ]
+    },
+    "trainingHiringFocus": {
+      "status": "Expanded in beta; needs Freda SOPs, training docs, current roles and hiring questions.",
+      "focus": [
+        "right staff",
+        "repeatable training",
+        "store-by-store onboarding",
+        "decorating weekend crew",
+        "manager operating scripts"
+      ]
     }
   }
 }
