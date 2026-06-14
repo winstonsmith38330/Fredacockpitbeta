@@ -1,0 +1,24 @@
+{
+  "name": "Freda Ops Cockpit Beta 0.2",
+  "short_name": "Freda Ops 0.2",
+  "description": "Mobile AI operations cockpit for L.A. Donuts Beta 0.1",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#e6007e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
