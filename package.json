@@ -1,0 +1,36 @@
+# Freda Ops Cockpit Beta 0.2
+# Copy this file to server/.env and fill values locally or in the deployment secrets panel.
+# Do not commit real credentials.
+
+PORT=8787
+SEED_DATA_PATH=../seed-data.json
+LIVE_DATA_PATH=./data/live-snapshots.json
+ALLOWED_ORIGINS=*
+
+# Reporting / POS live connector
+REPORTING_BASE_URL=https://reporting.site
+# Preferred: paste only the PHPSESSID value into the secret manager, not into code.
+REPORTING_PHPSESSID=
+# Alternative full Cookie header if needed, for example PHPSESSID=xxxx; another=value
+REPORTING_COOKIE=
+REPORTING_STORE_SLUG_BH=ladonuts_beverlyhills
+REPORTING_STORE_SLUG_PEN=ladonuts_penrith
+REPORTING_STORE_SLUG_TP=ladonuts_tarenpoint
+REPORTING_VIEWS=dashboard.php,eod_summary.php,product_sales_summary.php,product_sales.php,ticket_sales.php,busy_hours.php
+
+# Optional future login flow. Beta 0.2 does not need these if REPORTING_PHPSESSID is set.
+REPORTING_EMAIL=
+REPORTING_PASSWORD=
+REPORTING_LOGIN_URL=
+
+# Uber: use manual snapshot / CSV export in Beta 0.2 because the account uses Google login.
+UBER_MANAGER_URL=https://merchants.ubereats.com/manager/home/503ef13c-4f47-4581-acdf-2179564db004/analytics/sales-v2?dateRange=this_week
+UBER_MODE=manual_google_login
+
+# Square: safer path is Square API token or transaction export, not password scraping.
+SQUARE_ACCESS_TOKEN=
+SQUARE_LOCATION_ID=
+SQUARE_DASHBOARD_URL=https://app.squareup.com/dashboard/sales/transactions
+
+# Optional future AI
+OPENAI_API_KEY=
