@@ -18,6 +18,7 @@
   const tabs = [
     { id: 'today', label: 'Today' },
     { id: 'live', label: 'Live Sales' },
+    { id: 'capture', label: 'View Sync' },
     { id: 'hourly', label: 'Hourly Analysis' },
     { id: 'freda', label: 'Freda Priorities' },
     { id: 'stores', label: 'Stores' },
@@ -108,6 +109,7 @@
     const map = {
       today: renderToday,
       live: renderLiveSales,
+      capture: renderViewCapture,
       hourly: renderHourlyAnalysis,
       freda: renderFredaPriorities,
       stores: renderStores,
@@ -234,7 +236,7 @@
 
   function renderLiveSales() {
     const stores = seed.stores.map(s => ({ ...s, metrics: storeMetrics(s) }));
-    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2.4 separates POS Today, Uber WTD/daily manual snapshots and Square MTD/captured-period values. It adds a dedicated Hourly Analysis tab for Freda’s same-day last week / 4-week comparison and sell-out timing logic.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
+    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2.5 separates POS Today, Uber WTD/daily captures and Square MTD/captured-period values. If server sync cannot read reporting.site, use View Sync to capture the exact POS/Uber/Square page currently open in your browser.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
       <section class="card"><h2>Store sales snapshot</h2><div class="grid">${stores.map(liveStoreCard).join('')}</div></section>
       <section class="card"><h2>Uber WTD / daily manual snapshot</h2><div class="grid two">${Object.entries(state.live.uberEats || {}).filter(([store, m]) => Number(m.sales || m.totalSales || 0) > 0).map(([store, m]) => metricMiniCard(store, `Uber ${periodLabel(m, 'this_week')}`, m.sales || m.totalSales, `${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)} · not POS`)).join('') || '<div class="empty">No Uber WTD snapshot captured yet.</div>'}</div></section>
       <section class="card"><h2>Square MTD / captured period - Frieda’s Pies</h2><div class="grid two">${Object.entries(state.live.square || {}).map(([store, m]) => metricMiniCard(store, `Square ${periodLabel(m, 'captured')}`, m.netSales || m.totalCollected || m.sales, `${m.transactions || '—'} transactions · ${esc(m.period || 'captured period')} · not Uber`)).join('') || '<div class="empty">No Square snapshot captured yet.</div>'}</div></section>
@@ -264,7 +266,7 @@
     const rules = seed.hourlyAnalysis || {};
     const stores = seed.stores || [];
     const saved = state.hourlySnapshots || [];
-    return `<section class="hero-card"><div class="status-row"><span class="badge">Beta 0.2.4</span><span class="mini-badge">Freda hour-by-hour</span></div><h2>Hourly Analysis</h2><p class="muted">This is the specific view Freda asked for: compare each hour against the same day last week and the last 4 same weekdays, then highlight sell-outs that happen too early. Until reporting.site hourly endpoints are fully mapped, this tab uses ticket-history hourly shape plus manual/browser snapshots.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Try POS/hourly sync</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
+    return `<section class="hero-card"><div class="status-row"><span class="badge">Beta 0.2.5</span><span class="mini-badge">Freda hour-by-hour</span></div><h2>Hourly Analysis</h2><p class="muted">This is the specific view Freda asked for: compare each hour against the same day last week and the last 4 same weekdays, then highlight sell-outs that happen too early. Until reporting.site hourly endpoints are fully mapped, this tab uses ticket-history hourly shape plus manual/browser snapshots.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Try POS/hourly sync</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
       <section class="card"><h2>What this analysis will answer</h2><div class="grid two">${(rules.comparisonViews || []).map(x => `<div class="action-card"><strong>${esc(x)}</strong><p class="muted small">Used for same-day last week / last 4 weeks comparison and early sell-out warnings.</p></div>`).join('')}</div></section>
       <section class="card"><h2>Store hourly watch windows</h2><div class="grid">${(rules.storeHourRules || []).map(r => `<article class="store-card"><div class="store-title"><h3>${esc(r.store)}</h3><span class="mini-badge">${esc(r.watch)}</span></div><p>${esc(r.baseline)}</p>${hourlyShapeForStore(r.store)}</article>`).join('')}</div></section>
       <section class="card"><h2>Sell-out timing rules</h2><div class="grid">${(rules.alertRules || []).map(r => `<div class="action-card"><div class="action-head"><span class="rag ${ragClass(r.level)}"><span class="dot ${ragClass(r.level)}"></span>${esc(r.level)}</span></div><p>${esc(r.rule)}</p></div>`).join('')}</div><p class="footer-note">Planned FOMO sell-outs near close can be good. Unplanned sell-outs 3+ hours early are operational alerts.</p></section>
@@ -285,7 +287,7 @@
     const f = seed.fredaFeedback || {};
     const ops = seed.operationsIntelligence || {};
     const items = f.priorityChanges || [];
-    return `<section class="hero-card"><div class="status-row"><span class="badge">Freda feedback</span><span class="mini-badge">Beta 0.2.3</span></div><h2>What Freda wants the assistant to focus on next</h2><p class="muted">${esc(f.summary || 'Feedback captured. The app is being shifted toward early operational warning signals rather than static dashboards.')}</p></section>
+    return `<section class="hero-card"><div class="status-row"><span class="badge">Freda feedback</span><span class="mini-badge">Beta 0.2.5</span></div><h2>What Freda wants the assistant to focus on next</h2><p class="muted">${esc(f.summary || 'Feedback captured. The app is being shifted toward early operational warning signals rather than static dashboards.')}</p></section>
       <section class="card"><h2>Priority changes requested</h2><div class="grid two">${items.map(x => `<div class="action-card"><div class="action-head"><strong>${esc(x.area)}</strong><span class="mini-badge">Requested</span></div><p>${esc(x.request)}</p></div>`).join('')}</div></section>
       <section class="card"><h2>Hour-by-hour comparison</h2><p class="muted">${esc(ops.hourlyComparison?.status || '')}</p><ul class="list">${(ops.hourlyComparison?.views || []).map(x => `<li>${esc(x)}</li>`).join('')}</ul><p class="footer-note">Next data requirement: reliable busy_hours / ticket-sales hourly extraction by store.</p></section>
       <section class="card"><h2>Sell-out and leftovers tracker</h2><div class="grid two"><div class="card compact"><h3>Sell-out timing</h3><p>${esc(ops.sellOutTracker?.signals?.join(' · ') || '')}</p><p class="footer-note">Rule: ${esc(ops.sellOutTracker?.fomoRule || '')}</p></div><div class="card compact"><h3>Leftovers / first sold out</h3><p>Track what is left over most often, what sells out first, and whether sell-out was planned FOMO or an operational miss.</p></div></div></section>
@@ -397,10 +399,31 @@
     return `<section class="hero-card"><h2>Market Intelligence</h2><p class="muted">Competitor/trend files become Freda-ready commercial actions.</p><div class="kpi-row"><div class="kpi"><div class="label">Tracked</div><div class="value">${seed.market.boardPack.competitorsTracked}</div></div><div class="kpi"><div class="label">Completeness</div><div class="value">${seed.market.boardPack.averageDataCompleteness}%</div></div><div class="kpi"><div class="label">Threat</div><div class="value" style="font-size:15px">${esc(seed.market.boardPack.biggestDirectThreat)}</div></div></div></section><section class="card"><h2>Top competitors</h2><div class="grid">${seed.market.topCompetitors.map(c => `<div class="card compact"><div class="store-title"><h3>${esc(c.name)}</h3><span class="mini-badge">${c.score}</span></div><p class="muted small">${esc(c.category)}</p><p>${esc(c.why)}</p></div>`).join('')}</div></section><section class="card"><h2>Opportunities</h2><div class="grid">${seed.market.opportunities.map(o => `<div class="action-card"><div class="action-head"><span class="rag ${o.priority === 'High' ? 'Red' : 'Amber'}"><span class="dot ${o.priority === 'High' ? 'Red' : 'Amber'}"></span>${esc(o.priority)}</span><span class="mini-badge">Score ${o.score}</span></div><strong>${esc(o.title)}</strong><p>${esc(o.action)}</p></div>`).join('')}</div><p class="footer-note">${esc(seed.market.guardrail)}</p></section>`;
   }
 
+
+  function renderViewCapture() {
+    const today = new Date().toISOString().slice(0, 10);
+    const bookmarkletDefault = buildCaptureBookmarklet('reportingPOS', 'Penrith', today);
+    return `<section class="hero-card"><div class="status-row"><span class="badge">Beta 0.2.5</span><span class="mini-badge">Browser view sync</span></div><h2>View Sync: POS / Uber / Square</h2><p class="muted">This is the fallback sync method for the pages you already open manually. Open the correct POS, Uber or Square view, select the same source/store/period below, then use the bookmarklet or paste the copied page text. This captures the visible KPI cards without storing passwords.</p></section>
+      <section class="card"><h2>Step 1 — Choose what the open page represents</h2>${captureSettingsForm(today)}</section>
+      <section class="card"><h2>Step 2 — Browser bookmarklet capture</h2><p class="muted">Desktop method: drag/copy this bookmarklet to your bookmarks bar. Then open reporting.site / Uber / Square and click the bookmarklet while you are on the target page.</p><textarea readonly class="input" id="captureBookmarklet" style="min-height:130px">${esc(bookmarkletDefault)}</textarea><p class="footer-note">For Uber daily, first switch Uber to the current day or custom single day. For POS, use daily_sales.php, dashboard.php, busy_hours.php or ticket_sales.php. For Square, use the month/date filter you want captured.</p></section>
+      <section class="card"><h2>Step 3 — Paste page text capture</h2><p class="muted">Alternative method: on the source page press Ctrl+A then Ctrl+C, come back here, paste the text, and save. This is less complete than the bookmarklet but works when bookmarks are blocked.</p><form id="pageCaptureForm" class="form-grid"><select class="input" id="pageCaptureSource"><option value="reportingPOS">Reporting POS</option><option value="uberEats">Uber Eats</option><option value="square">Square / Frieda's Pies</option></select><select class="input" id="pageCaptureStore">${seed.stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="pageCapturePeriod" value="${today}" placeholder="Period: YYYY-MM-DD, this_week, or MTD Jun 2026"/><textarea id="pageCaptureText" placeholder="Paste copied page text here" style="min-height:160px"></textarea><button class="primary-btn">Save captured view</button><div id="pageCaptureResult" class="muted small"></div></form></section>
+      <section class="card"><h2>What will be extracted</h2><div class="grid three"><div class="card compact"><h3>Reporting POS</h3><p>POS Today sales, orders/tickets, AOV, cash/card when visible, and hourly rows when the page exposes them.</p></div><div class="card compact"><h3>Uber Eats</h3><p>Daily or WTD sales, orders and AOV from the selected Uber period. Daily values require selecting a single day in Uber first.</p></div><div class="card compact"><h3>Square</h3><p>Frieda's Pies sales/transactions from the visible Square date range, labelled as MTD/captured period unless the period is a single day.</p></div></div></section>`;
+  }
+
+  function captureSettingsForm(defaultDate) {
+    return `<div class="form-grid"><select class="input" id="captureSource"><option value="reportingPOS">Reporting POS</option><option value="uberEats">Uber Eats</option><option value="square">Square / Frieda's Pies</option></select><select class="input" id="captureStore">${seed.stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="capturePeriod" value="${defaultDate}" placeholder="Period: YYYY-MM-DD, this_week, or MTD Jun 2026"/><button class="ghost-btn" id="refreshBookmarkletBtn" type="button">Update bookmarklet</button><div class="muted small" id="captureHelp">Use Reporting POS for reporting.site pages, Uber Eats for merchants.ubereats.com, and Square for app.squareup.com.</div></div>`;
+  }
+
+  function buildCaptureBookmarklet(source, store, period) {
+    const endpoint = `${location.origin}/api/bookmarklet/capture`;
+    const payload = { endpoint, source, store, period };
+    return `javascript:(()=>{const cfg=${JSON.stringify(payload)};const scripts=Array.from(document.scripts||[]).map(s=>s.textContent||'').join('\\n').slice(0,200000);fetch(cfg.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({source:cfg.source,store:cfg.store,period:cfg.period,url:location.href,title:document.title,text:(document.body?document.body.innerText:'')+'\\n\\nSCRIPT_DATA\\n'+scripts})}).then(r=>r.json()).then(j=>alert(j.ok?'Captured for Freda Ops: '+(j.parsed?.summary||'saved'):'Capture returned no data')).catch(e=>alert('Capture failed: '+e.message));})();`;
+  }
+
   function renderData() {
     const status = state.live.connectorStatus || {};
     const bookmarklet = `javascript:(()=>{fetch('${location.origin}/api/bookmarklet/capture',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({url:location.href,title:document.title,text:document.body.innerText})}).then(()=>alert('Captured for Freda Ops')).catch(e=>alert('Capture failed: '+e.message));})();`;
-    return `<section class="hero-card"><h2>Data & Connectors</h2><p class="muted">Beta 0.2.3 is live-sales capable and diagnostic. POS can sync from reporting.site with a secure session env var. Uber/Square can be captured manually, via export, or later through safer API/OAuth paths.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section><section class="card"><h2>Connector status</h2>${seed.sourceStatus.map(s => `<div class="source-row"><div><strong>${esc(s.source)}</strong><br><span class="muted small">${esc(s.notes)}</span></div><span class="mini-badge">${esc(s.status)} · ${esc(s.confidence)}</span></div>`).join('')}<hr/><p class="muted small">Last reporting sync: ${esc(status.reportingSite?.lastSync || 'not synced in this browser yet')} ${status.reportingSite?.error ? '· Error: ' + esc(status.reportingSite.error) : ''}</p>${reportingDiagnosticsHtml(status)}</section><section class="card"><h2>Manual Uber / Square / POS snapshot</h2>${manualSnapshotForm()}</section><section class="card"><h2>WhatsApp export upload</h2><input id="serverUpload" class="file-input" type="file" accept=".zip,.txt"/><div id="serverUploadResult" class="muted small" style="margin-top:8px"></div></section><section class="card"><h2>Browser capture bookmarklet</h2><p class="muted">For pages where login is difficult, open Uber/Square/reporting page in the browser and run this capture bookmarklet. Best on desktop first.</p><textarea readonly class="input" style="min-height:120px">${esc(bookmarklet)}</textarea><p class="footer-note">This posts page text to this app server and parses KPI cards. It avoids saving passwords in the app.</p></section><section class="card"><h2>Local upload test</h2><p class="muted">Fallback browser-only summary for CSV/TXT files.</p><input id="dataUpload" class="file-input" type="file" multiple accept=".csv,.txt,.json"/><div id="uploadResults" class="grid" style="margin-top:12px">${state.uploads.map(uploadCard).join('')}</div></section>`;
+    return `<section class="hero-card"><h2>Data & Connectors</h2><p class="muted">Beta 0.2.5 keeps secure server sync, but the recommended beta workflow is View Sync: capture the exact POS, Uber or Square page you already opened in the browser.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section><section class="card"><h2>Connector status</h2>${seed.sourceStatus.map(s => `<div class="source-row"><div><strong>${esc(s.source)}</strong><br><span class="muted small">${esc(s.notes)}</span></div><span class="mini-badge">${esc(s.status)} · ${esc(s.confidence)}</span></div>`).join('')}<hr/><p class="muted small">Last reporting sync: ${esc(status.reportingSite?.lastSync || 'not synced in this browser yet')} ${status.reportingSite?.error ? '· Error: ' + esc(status.reportingSite.error) : ''}</p>${reportingDiagnosticsHtml(status)}</section><section class="card"><h2>Manual Uber / Square / POS snapshot</h2>${manualSnapshotForm()}</section><section class="card"><h2>WhatsApp export upload</h2><input id="serverUpload" class="file-input" type="file" accept=".zip,.txt"/><div id="serverUploadResult" class="muted small" style="margin-top:8px"></div></section><section class="card"><h2>Browser capture bookmarklet</h2><p class="muted">For pages where login is difficult, open Uber/Square/reporting page in the browser and run this capture bookmarklet. Best on desktop first.</p><textarea readonly class="input" style="min-height:120px">${esc(bookmarklet)}</textarea><p class="footer-note">This posts page text to this app server and parses KPI cards. It avoids saving passwords in the app.</p></section><section class="card"><h2>Local upload test</h2><p class="muted">Fallback browser-only summary for CSV/TXT files.</p><input id="dataUpload" class="file-input" type="file" multiple accept=".csv,.txt,.json"/><div id="uploadResults" class="grid" style="margin-top:12px">${state.uploads.map(uploadCard).join('')}</div></section>`;
   }
 
   function reportingDiagnosticsHtml(status) {
@@ -444,6 +467,14 @@
     if (hourlySnapshot) hourlySnapshot.addEventListener('submit', handleHourlySnapshot);
     const manualSnapshot = $('manualSnapshotForm');
     if (manualSnapshot) manualSnapshot.addEventListener('submit', handleManualSnapshot);
+    const refreshBookmarklet = $('refreshBookmarkletBtn');
+    if (refreshBookmarklet) refreshBookmarklet.addEventListener('click', () => {
+      const out = $('captureBookmarklet');
+      if (out) out.value = buildCaptureBookmarklet($('captureSource').value, $('captureStore').value, $('capturePeriod').value);
+    });
+    ['captureSource','captureStore','capturePeriod'].forEach(id => { const el=$(id); if (el) el.addEventListener('change', () => { const out=$('captureBookmarklet'); if(out) out.value=buildCaptureBookmarklet($('captureSource').value,$('captureStore').value,$('capturePeriod').value); }); });
+    const pageCapture = $('pageCaptureForm');
+    if (pageCapture) pageCapture.addEventListener('submit', handlePageCapture);
   }
 
   async function syncReporting() {
@@ -465,6 +496,31 @@
     }
   }
 
+
+
+  async function handlePageCapture(e) {
+    e.preventDefault();
+    const out = $('pageCaptureResult');
+    const payload = {
+      source: $('pageCaptureSource').value,
+      store: $('pageCaptureStore').value,
+      period: $('pageCapturePeriod').value,
+      title: 'Manual pasted page text',
+      url: 'manual-paste',
+      text: $('pageCaptureText').value
+    };
+    if (!payload.text.trim()) { out.textContent = 'Paste the page text first.'; return; }
+    out.textContent = 'Parsing captured page...';
+    try {
+      const body = await api('/api/bookmarklet/capture', { method: 'POST', body: JSON.stringify(payload) });
+      state.live = body.live || state.live;
+      state.serverOnline = true;
+      out.textContent = body.parsed?.summary || 'Captured view saved.';
+      render();
+    } catch (error) {
+      out.textContent = 'Capture failed: ' + error.message;
+    }
+  }
 
   function handleHourlySnapshot(e) {
     e.preventDefault();
