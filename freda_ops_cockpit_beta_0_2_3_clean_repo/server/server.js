@@ -29,7 +29,7 @@ function saveLive(data) { writeJson(LIVE_PATH, data); return data; }
 function liveMerged() { return mergeLive(seed(), liveRaw()); }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.5', livePath: LIVE_PATH });
+  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.6', livePath: LIVE_PATH });
 });
 
 app.get('/api/seed', (_req, res) => res.json(seed()));
@@ -186,7 +186,7 @@ app.post('/api/assistant', (req, res) => {
 app.use(express.static(WEB_PATH, { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(WEB_PATH, 'index.html')));
 
-app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2.5 running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2.6 running on http://localhost:${PORT}`));
 
 function firstMetric(obj = {}, keys = []) {
   for (const key of keys) {
