@@ -1,7 +1,7 @@
 window.FREDA_OPS_SEED = {
   "meta": {
     "appName": "Freda Ops Cockpit",
-    "version": "Beta 0.2.5",
+    "version": "Beta 0.2.6",
     "generatedAt": "2026-06-14T19:45:00Z",
     "mode": "Browser View Sync patch: capture visible POS/Uber/Square pages, daily Uber capture, POS page text/scrip data parsing, Freda hourly analysis."
   },
