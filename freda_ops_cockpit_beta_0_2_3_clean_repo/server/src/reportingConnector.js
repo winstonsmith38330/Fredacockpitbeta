@@ -59,7 +59,7 @@ export function buildReportingHeaders(env = process.env) {
   return {
     headers: {
       Cookie: cookieHeader,
-      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.4 (+https://la-donuts.local)',
+      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.5 (+https://la-donuts.local)',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-AU,en;q=0.9,fr;q=0.8',
       'Cache-Control': 'no-cache',
@@ -109,7 +109,7 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
     }
 
     // Try AJAX/data endpoints with common date parameter names. This is the main
-    // Beta 0.2.4 improvement for reporting.site sync.
+    // Beta 0.2.5 improvement for reporting.site sync.
     const endpointResults = await tryReportingEndpoints(config.baseUrl, store.slug, headerResult.headers, fetchImpl, env);
     for (const result of endpointResults) {
       storeResult.views[result.view] = result;
@@ -351,9 +351,24 @@ function extractMetrics(view, text) {
   ];
 
   const extraPatterns = [
+    // Uber Eats French/English cards: label then value
+    ['totalSales', /Ventes\s+([\d\s,.]+)\s*\$?\s*AU/i],
+    ['orders', /Commandes\s+r[ée]serv[ée]es\s+([\d\s,]+)/i],
+    ['orders', /Commandes\s+qui\s+ont\s+g[ée]n[ée]r[ée]\s+des\s+ventes\s+([\d\s,]+)/i],
+    ['averageSpend', /Montant\s+moyen\s+des\s+commandes\s+([\d\s,.]+)\s*\$?\s*AU/i],
+    ['averageSpend', /Valeur\s+moyenne\s+des\s+articles\s+vendus\s+par\s+commande\s+([\d\s,.]+)\s*\$?\s*AU/i],
+    // Uber Eats older layout: value then French label
     ['totalSales', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s*AU.*?Valeur\s+totale\s+des\s+articles\s+vendus/i],
     ['orders', /([\d\s,]+)\s+Commandes\s+qui\s+ont\s+g[ée]n[ée]r[ée]\s+des\s+ventes/i],
     ['averageSpend', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s*AU.*?Valeur\s+moyenne\s+des\s+articles\s+vendus\s+par\s+commande/i],
+    // Reporting.site daily / EOD cards
+    ['netSales', /TOTAL\s+NET\s+SALES\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i],
+    ['netSales', /TOTAL\s+NET\s*\(\$\)\s*([\d,]+(?:\.\d{1,2})?)/i],
+    ['grossSales', /GROSS\s+TAKINGS\s*\$?\s*([\d,]+(?:\.\d{1,2})?)/i],
+    ['orders', /([\d,]+)\s+tickets?\s+in\s+this\s+trading\s+range/i],
+    ['orders', /Tickets\s+([\d,]+)/i],
+    ['averageSpend', /AVERAGE\s+ORDER\s+VALUE.*?\$?\s*([\d,]+(?:\.\d{1,2})?)/i],
+    // Square French cards
     ['transactions', /([\d\s,]+)\s+TRANSACTIONS\s+FINALIS[ÉE]ES/i],
     ['totalCollected', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s+TOTAL\s+ENCAISS[ÉE]/i],
     ['netSales', /([\d\s,]+(?:\.\d{1,2})?)\s*\$\s+VENTES\s+NETTES/i]
@@ -363,6 +378,8 @@ function extractMetrics(view, text) {
     const m = t.match(regex);
     if (m && metrics[key] == null) metrics[key] = toNumber(m[1]);
   }
+
+  if (metrics.sales == null) metrics.sales = firstNumber(metrics.totalSales, metrics.totalRevenue, metrics.netSales);
 
   const topProduct = t.match(/TOP\s+PRODUCT\s+([A-Za-z0-9 &()'\-]+?)\s+Revenue/i) || t.match(/Top Product\s+([A-Za-z0-9 &()'\-]+)/i);
   if (topProduct) metrics.topProduct = cleanLabel(topProduct[1]);
@@ -413,9 +430,18 @@ export function summarizeReportingStore(storeName, views) {
 
 export function parsePageTextCapture(source, text) {
   const normalized = normalize(text || '');
+  const metrics = extractMetrics(source || 'capture', normalized);
+  const hourlyRows = extractHourlyRowsFromText(normalized);
+  const detected = [];
+  if (metrics.sales || metrics.totalSales || metrics.netSales || metrics.grossSales) detected.push('sales');
+  if (metrics.orders || metrics.transactions) detected.push('orders/transactions');
+  if (metrics.averageSpend || metrics.aov) detected.push('AOV');
+  if (hourlyRows.length) detected.push(`${hourlyRows.length} hourly rows`);
   return {
     source,
-    metrics: extractMetrics(source || 'capture', normalized),
+    metrics,
+    hourlyRows,
+    summary: detected.length ? `Captured ${detected.join(', ')} from ${source}.` : `Captured text from ${source}, but no KPI was parsed yet.`,
     rawTextPreview: normalized.slice(0, 2000)
   };
 }
