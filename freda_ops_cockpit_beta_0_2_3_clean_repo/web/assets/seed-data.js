@@ -1,9 +1,9 @@
 window.FREDA_OPS_SEED = {
   "meta": {
     "appName": "Freda Ops Cockpit",
-    "version": "Beta 0.2.3",
+    "version": "Beta 0.2.4",
     "generatedAt": "2026-06-14T19:45:00Z",
-    "mode": "Freda feedback patch: hour-by-hour comparison, sell-out timing, balls/rings production mix, stock trip planner, leftover/sell-out tracker, training/hiring priorities, clearer POS/Uber/Square sync diagnostics."
+    "mode": "Freda feedback patch + hourly analysis: same-day last week / 4-week template, sell-out timing, stock/balls mix, and improved reporting.site endpoint diagnostics."
   },
   "briefing": [
     "Treat this beta as an interface and operating-template validation until the POS/Uber/Square connectors are fully verified.",
@@ -11,7 +11,7 @@ window.FREDA_OPS_SEED = {
     "Sell-out timing matters: if a store sells out 3 hours earlier than last week, the assistant should surface it before the same issue repeats.",
     "Production mix needs a balls/rings monitor because specials now use a high share of balls; seed assumption is around 65% balls for specials until confirmed by production data.",
     "WhatsApp stock-order photos should become a weekly usage and delivery-trip planner, with stock sent in 2 planned trips instead of daily driver pressure.",
-    "Frieda\u2019s Pies momentum is real: recent NZ pie video/social lift should be tracked as a demand driver and linked to training and production readiness.",
+    "Frieda’s Pies momentum is real: recent NZ pie video/social lift should be tracked as a demand driver and linked to training and production readiness.",
     "Hiring and training are now the biggest management priorities; the app should prioritize staff quality, onboarding and repeatable SOP execution."
   ],
   "stores": [
@@ -965,7 +965,7 @@ window.FREDA_OPS_SEED = {
           {
             "date": "4/22/26",
             "category": "cleanliness",
-            "text": "Hi Frida, do you want a photo of both displays or just one? \u263a\ufe0f <This message was edited>"
+            "text": "Hi Frida, do you want a photo of both displays or just one? ☺️ <This message was edited>"
           },
           {
             "date": "4/23/26",
@@ -1022,7 +1022,7 @@ window.FREDA_OPS_SEED = {
           {
             "date": "6/10/26",
             "category": "photo_update",
-            "text": "Hey guys from now on if there\u2019s allot of donuts left over from taren point I must be notified by 4pm and I\u2019ll get them picked up to go to Beverly Hills store"
+            "text": "Hey guys from now on if there’s allot of donuts left over from taren point I must be notified by 4pm and I’ll get them picked up to go to Beverly Hills store"
           },
           {
             "date": "6/11/26",
@@ -1305,7 +1305,7 @@ window.FREDA_OPS_SEED = {
         "severity": "Amber",
         "category": "Planning",
         "summary": "Confirm leftover counts before daily bake so the smart plan produces net bake.",
-        "evidence": "Frieda\u2019s Pies smart plan has leftover field before baking.",
+        "evidence": "Frieda’s Pies smart plan has leftover field before baking.",
         "status": "Open",
         "source": "Frieda pies smart plan"
       }
@@ -1650,9 +1650,9 @@ window.FREDA_OPS_SEED = {
   "sourceStatus": [
     {
       "source": "Reporting.site POS live sync",
-      "status": "Beta connector + diagnostic mode",
+      "status": "Beta connector + endpoint diagnostic mode",
       "confidence": "High once REPORTING_PHPSESSID is configured",
-      "notes": "Server attempts to fetch reporting.site views; if pages load but KPIs are injected by JavaScript, use manual/browser capture until endpoint parsing is confirmed."
+      "notes": "Connector now tests dashboard pages plus AJAX-style endpoint candidates (get_data.php, get_data_period.php, fetch_data.php, busy_hours.php, daily_sales.php). If no KPIs parse, use browser capture/manual snapshot while endpoints are mapped."
     },
     {
       "source": "Uber Eats sales",
@@ -1664,7 +1664,7 @@ window.FREDA_OPS_SEED = {
       "source": "Square / Frieda's Pies",
       "status": "MTD/manual/export capture",
       "confidence": "Medium-High with exports",
-      "notes": "Frieda\u2019s Pies Square values are labelled as MTD/captured period unless a daily export/snapshot is entered."
+      "notes": "Frieda’s Pies Square values are labelled as MTD/captured period unless a daily export/snapshot is entered."
     },
     {
       "source": "WhatsApp reporting groups",
@@ -1910,5 +1910,50 @@ window.FREDA_OPS_SEED = {
         "manager operating scripts"
       ]
     }
+  },
+  "hourlyAnalysis": {
+    "status": "Beta template: uses ticket-history hourly shape plus manual/live snapshots until reporting.site busy_hours endpoint returns parsable hourly rows.",
+    "comparisonViews": [
+      "Today vs same weekday last week",
+      "Today vs last 4-week same-day average",
+      "Hour-by-hour variance by store",
+      "Sell-out time vs expected sell-out time"
+    ],
+    "alertRules": [
+      {
+        "level": "Red",
+        "rule": "Sold out 3+ hours earlier than expected or before the main peak window is complete."
+      },
+      {
+        "level": "Amber",
+        "rule": "Current hour materially above same weekday average and no cabinet/stock photo confirmed."
+      },
+      {
+        "level": "Green",
+        "rule": "Sales pace within range and cabinet/stock photo confirmed."
+      }
+    ],
+    "storeHourRules": [
+      {
+        "store": "Beverly Hills",
+        "watch": "11:00-16:00",
+        "baseline": "Compare lunch ramp to last week and 4-week same weekday average. Release reserve before 12:00 if pacing is high."
+      },
+      {
+        "store": "Penrith",
+        "watch": "14:00-18:00",
+        "baseline": "Protect afternoon cabinet. If 15:00 or 16:00 is above baseline, request cabinet photo before 3pm."
+      },
+      {
+        "store": "Taren Point",
+        "watch": "10:00-14:00",
+        "baseline": "Track early/lunch sell-out risk. If sold out before 3pm, classify as operational unless Freda marked it planned FOMO."
+      },
+      {
+        "store": "Frieda's Pies",
+        "watch": "daily bake / leftovers",
+        "baseline": "Use Square + leftover photo. Hourly analysis is less important than first sold-out product and leftover count."
+      }
+    ]
   }
 };
