@@ -8,6 +8,7 @@
     audits: loadAudits(),
     uploads: JSON.parse(localStorage.getItem('freda.uploads') || '[]'),
     chat: JSON.parse(localStorage.getItem('freda.chat') || '[]'),
+    hourlySnapshots: JSON.parse(localStorage.getItem('freda.hourlySnapshots') || '[]'),
     live: seed.liveSamples || {},
     serverOnline: false,
     syncing: false,
@@ -17,6 +18,7 @@
   const tabs = [
     { id: 'today', label: 'Today' },
     { id: 'live', label: 'Live Sales' },
+    { id: 'hourly', label: 'Hourly Analysis' },
     { id: 'freda', label: 'Freda Priorities' },
     { id: 'stores', label: 'Stores' },
     { id: 'production', label: 'Production' },
@@ -106,6 +108,7 @@
     const map = {
       today: renderToday,
       live: renderLiveSales,
+      hourly: renderHourlyAnalysis,
       freda: renderFredaPriorities,
       stores: renderStores,
       production: renderProduction,
@@ -231,7 +234,7 @@
 
   function renderLiveSales() {
     const stores = seed.stores.map(s => ({ ...s, metrics: storeMetrics(s) }));
-    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2.3 separates POS Today, Uber WTD/daily manual snapshots and Square MTD/captured-period values. It also adds Freda’s requested hour-by-hour, sell-out, stock, production-mix and training/hiring priorities.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
+    return `<section class="hero-card"><h2>Live Sales</h2><p class="muted">Beta 0.2.4 separates POS Today, Uber WTD/daily manual snapshots and Square MTD/captured-period values. It adds a dedicated Hourly Analysis tab for Freda’s same-day last week / 4-week comparison and sell-out timing logic.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Sync reporting.site POS</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
       <section class="card"><h2>Store sales snapshot</h2><div class="grid">${stores.map(liveStoreCard).join('')}</div></section>
       <section class="card"><h2>Uber WTD / daily manual snapshot</h2><div class="grid two">${Object.entries(state.live.uberEats || {}).filter(([store, m]) => Number(m.sales || m.totalSales || 0) > 0).map(([store, m]) => metricMiniCard(store, `Uber ${periodLabel(m, 'this_week')}`, m.sales || m.totalSales, `${m.orders || '—'} orders · AOV ${fmtMoney2(m.aov || m.averageSpend)} · not POS`)).join('') || '<div class="empty">No Uber WTD snapshot captured yet.</div>'}</div></section>
       <section class="card"><h2>Square MTD / captured period - Frieda’s Pies</h2><div class="grid two">${Object.entries(state.live.square || {}).map(([store, m]) => metricMiniCard(store, `Square ${periodLabel(m, 'captured')}`, m.netSales || m.totalCollected || m.sales, `${m.transactions || '—'} transactions · ${esc(m.period || 'captured period')} · not Uber`)).join('') || '<div class="empty">No Square snapshot captured yet.</div>'}</div></section>
@@ -254,6 +257,28 @@
 
   function manualSnapshotForm() {
     return `<form id="manualSnapshotForm" class="form-grid"><select class="input" id="snapshotSource"><option value="uberEats">Uber Eats</option><option value="square">Square / Frieda's Pies</option><option value="reportingPOS">Reporting POS manual</option></select><select class="input" id="snapshotStore">${seed.stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="snapshotPeriod" placeholder="Period, e.g. 2026-06-14, this_week, or MTD Jun 2026"/><input class="input" id="snapshotSales" type="number" step="0.01" placeholder="Sales / net sales"/><input class="input" id="snapshotOrders" type="number" step="1" placeholder="Orders / transactions"/><input class="input" id="snapshotAov" type="number" step="0.01" placeholder="AOV / average spend"/><textarea id="snapshotNote" placeholder="Optional note"></textarea><button class="primary-btn">Save snapshot</button><div id="manualSnapshotResult" class="muted small"></div></form>`;
+  }
+
+
+  function renderHourlyAnalysis() {
+    const rules = seed.hourlyAnalysis || {};
+    const stores = seed.stores || [];
+    const saved = state.hourlySnapshots || [];
+    return `<section class="hero-card"><div class="status-row"><span class="badge">Beta 0.2.4</span><span class="mini-badge">Freda hour-by-hour</span></div><h2>Hourly Analysis</h2><p class="muted">This is the specific view Freda asked for: compare each hour against the same day last week and the last 4 same weekdays, then highlight sell-outs that happen too early. Until reporting.site hourly endpoints are fully mapped, this tab uses ticket-history hourly shape plus manual/browser snapshots.</p><div class="action-controls"><button class="primary-btn" id="syncReportingBtn">Try POS/hourly sync</button><button class="ghost-btn" id="refreshLiveBtn">Refresh summary</button></div></section>
+      <section class="card"><h2>What this analysis will answer</h2><div class="grid two">${(rules.comparisonViews || []).map(x => `<div class="action-card"><strong>${esc(x)}</strong><p class="muted small">Used for same-day last week / last 4 weeks comparison and early sell-out warnings.</p></div>`).join('')}</div></section>
+      <section class="card"><h2>Store hourly watch windows</h2><div class="grid">${(rules.storeHourRules || []).map(r => `<article class="store-card"><div class="store-title"><h3>${esc(r.store)}</h3><span class="mini-badge">${esc(r.watch)}</span></div><p>${esc(r.baseline)}</p>${hourlyShapeForStore(r.store)}</article>`).join('')}</div></section>
+      <section class="card"><h2>Sell-out timing rules</h2><div class="grid">${(rules.alertRules || []).map(r => `<div class="action-card"><div class="action-head"><span class="rag ${ragClass(r.level)}"><span class="dot ${ragClass(r.level)}"></span>${esc(r.level)}</span></div><p>${esc(r.rule)}</p></div>`).join('')}</div><p class="footer-note">Planned FOMO sell-outs near close can be good. Unplanned sell-outs 3+ hours early are operational alerts.</p></section>
+      <section class="card"><h2>Manual hourly checkpoint</h2><form id="hourlySnapshotForm" class="form-grid"><select class="input" id="hourlyStore">${stores.map(s => `<option>${esc(s.name)}</option>`).join('')}</select><input class="input" id="hourlyDate" placeholder="Date, e.g. 2026-06-15"/><input class="input" id="hourlyHour" placeholder="Hour, e.g. 13:00"/><input class="input" id="hourlySales" type="number" step="0.01" placeholder="Sales for that hour"/><input class="input" id="hourlyOrders" type="number" step="1" placeholder="Orders for that hour"/><input class="input" id="hourlySoldOut" placeholder="Sold-out time/product, if any"/><textarea id="hourlyNote" placeholder="Cabinet/stock note, e.g. photo confirmed, balls low, planned FOMO"></textarea><button class="primary-btn">Save hourly checkpoint</button><div id="hourlySnapshotResult" class="muted small"></div></form></section>
+      <section class="card"><h2>Saved hourly checkpoints</h2><div class="grid">${saved.slice(0,12).map(h => `<div class="card compact"><div class="store-title"><h3>${esc(h.store)}</h3><span class="mini-badge">${esc(h.date)} ${esc(h.hour)}</span></div><div class="kpi-row"><div class="kpi"><div class="label">Sales</div><div class="value">${fmtMoney2(h.sales)}</div></div><div class="kpi"><div class="label">Orders</div><div class="value">${h.orders || '—'}</div></div><div class="kpi"><div class="label">Sold-out</div><div class="value" style="font-size:15px">${esc(h.soldOut || '—')}</div></div></div><p class="muted small">${esc(h.note || '')}</p></div>`).join('') || '<div class="empty">No hourly checkpoints saved yet.</div>'}</div></section>`;
+  }
+
+  function hourlyShapeForStore(storeName) {
+    const store = (seed.stores || []).find(s => s.name === storeName) || {};
+    const hist = store.ticketHistory || (seed.ticketHistory || {})[storeName];
+    const hours = hist?.recentTopHours || store.topHours || [];
+    if (!hours.length) return '<p class="muted small">No hourly shape yet. Use daily leftover / sold-out checkpoints.</p>';
+    const max = Math.max(...hours.map(x => Number(x.sales || 0)), 1);
+    return `<div class="bar-wrap">${hours.slice(0,5).map(h => `<div class="bar-row"><span>${esc(h.hour)}</span><div class="bar-track"><div class="bar-fill" style="width:${(Number(h.sales || 0) / max) * 100}%"></div></div><strong>${Math.round(Number(h.sales || 0)).toLocaleString('en-AU')}</strong></div>`).join('')}</div><p class="footer-note">Ticket history shape only. Live hour-by-hour comparison requires reporting busy_hours/ticket_sales parsing or manual checkpoints.</p>`;
   }
 
   function renderFredaPriorities() {
@@ -415,6 +440,8 @@
     if (dataUpload) dataUpload.addEventListener('change', handleLocalUploads);
     const serverUpload = $('serverUpload');
     if (serverUpload) serverUpload.addEventListener('change', handleServerUpload);
+    const hourlySnapshot = $('hourlySnapshotForm');
+    if (hourlySnapshot) hourlySnapshot.addEventListener('submit', handleHourlySnapshot);
     const manualSnapshot = $('manualSnapshotForm');
     if (manualSnapshot) manualSnapshot.addEventListener('submit', handleManualSnapshot);
   }
@@ -436,6 +463,28 @@
     } finally {
       state.syncing = false; render();
     }
+  }
+
+
+  function handleHourlySnapshot(e) {
+    e.preventDefault();
+    const item = {
+      id: 'HR-' + Date.now(),
+      store: $('hourlyStore').value,
+      date: $('hourlyDate').value || new Date().toISOString().slice(0,10),
+      hour: $('hourlyHour').value || new Date().toTimeString().slice(0,5),
+      sales: Number($('hourlySales').value || 0),
+      orders: Number($('hourlyOrders').value || 0),
+      soldOut: $('hourlySoldOut').value,
+      note: $('hourlyNote').value,
+      capturedAt: new Date().toISOString()
+    };
+    state.hourlySnapshots.unshift(item);
+    state.hourlySnapshots = state.hourlySnapshots.slice(0, 50);
+    localStorage.setItem('freda.hourlySnapshots', JSON.stringify(state.hourlySnapshots));
+    const out = $('hourlySnapshotResult');
+    if (out) out.textContent = 'Hourly checkpoint saved. This feeds the sell-out / same-day comparison template in this browser.';
+    render();
   }
 
   async function handleManualSnapshot(e) {

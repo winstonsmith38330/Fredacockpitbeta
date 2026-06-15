@@ -1,4 +1,4 @@
-const CACHE_NAME = 'freda-ops-cockpit-beta-0-2-3-final-v3';
+const CACHE_NAME = 'freda-ops-cockpit-beta-0-2-4-final-v1';
 const APP_ASSETS = [
   './',
   './index.html',
