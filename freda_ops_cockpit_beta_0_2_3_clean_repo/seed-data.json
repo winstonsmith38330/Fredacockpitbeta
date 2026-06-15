@@ -1,9 +1,9 @@
 {
   "meta": {
     "appName": "Freda Ops Cockpit",
-    "version": "Beta 0.2.4",
+    "version": "Beta 0.2.5",
     "generatedAt": "2026-06-14T19:45:00Z",
-    "mode": "Freda feedback patch + hourly analysis: same-day last week / 4-week template, sell-out timing, stock/balls mix, and improved reporting.site endpoint diagnostics."
+    "mode": "Browser View Sync patch: capture visible POS/Uber/Square pages, daily Uber capture, POS page text/scrip data parsing, Freda hourly analysis."
   },
   "briefing": [
     "Treat this beta as an interface and operating-template validation until the POS/Uber/Square connectors are fully verified.",
@@ -1650,21 +1650,21 @@
   "sourceStatus": [
     {
       "source": "Reporting.site POS live sync",
-      "status": "Beta connector + endpoint diagnostic mode",
+      "status": "Server sync + browser view capture fallback",
       "confidence": "High once REPORTING_PHPSESSID is configured",
-      "notes": "Connector now tests dashboard pages plus AJAX-style endpoint candidates (get_data.php, get_data_period.php, fetch_data.php, busy_hours.php, daily_sales.php). If no KPIs parse, use browser capture/manual snapshot while endpoints are mapped."
+      "notes": "If server sync cannot parse JavaScript-rendered pages, use View Sync on reporting.site daily_sales/dashboard/busy_hours/ticket_sales pages."
     },
     {
       "source": "Uber Eats sales",
-      "status": "WTD/manual daily capture",
+      "status": "Daily/WTD browser view capture",
       "confidence": "Medium",
-      "notes": "Uber dashboard currently uses dateRange=this_week. App labels this as Uber WTD unless a daily chart value is entered manually."
+      "notes": "Open Uber for the current day or WTD, then use View Sync to capture sales, orders and AOV from the visible dashboard."
     },
     {
       "source": "Square / Frieda's Pies",
-      "status": "MTD/manual/export capture",
+      "status": "MTD/daily browser view capture or export",
       "confidence": "Medium-High with exports",
-      "notes": "Frieda’s Pies Square values are labelled as MTD/captured period unless a daily export/snapshot is entered."
+      "notes": "Open Square date range then use View Sync; values are labelled daily or MTD/captured period based on selected period."
     },
     {
       "source": "WhatsApp reporting groups",
@@ -1953,6 +1953,52 @@
         "store": "Frieda's Pies",
         "watch": "daily bake / leftovers",
         "baseline": "Use Square + leftover photo. Hourly analysis is less important than first sold-out product and leftover count."
+      }
+    ]
+  },
+  "viewSync": {
+    "status": "recommended beta sync method",
+    "why": "Server-side sync cannot always see dashboard KPIs when reporting.site, Uber, or Square render values inside the logged-in browser.",
+    "sources": [
+      {
+        "source": "Reporting POS",
+        "bestViews": [
+          "daily_sales.php",
+          "dashboard.php",
+          "busy_hours.php",
+          "ticket_sales.php",
+          "eod_summary.php"
+        ],
+        "captures": [
+          "POS Today sales",
+          "tickets/orders",
+          "AOV",
+          "hourly rows if exposed"
+        ]
+      },
+      {
+        "source": "Uber Eats",
+        "bestViews": [
+          "analytics/sales-v2 with current day selected",
+          "analytics/sales-v2 with this_week selected"
+        ],
+        "captures": [
+          "daily/WTD sales",
+          "orders",
+          "AOV",
+          "chart comparison labels when visible"
+        ]
+      },
+      {
+        "source": "Square",
+        "bestViews": [
+          "sales/transactions filtered to month or day"
+        ],
+        "captures": [
+          "net sales",
+          "transactions",
+          "captured period"
+        ]
       }
     ]
   }
