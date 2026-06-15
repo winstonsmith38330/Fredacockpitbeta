@@ -7,16 +7,13 @@ const DEFAULT_STORES = [
 ];
 
 const DEFAULT_VIEWS = [
+  // Keep server sync intentionally light. The full reporting.site pages can be slow
+  // and JavaScript-rendered; too many sequential fetches caused browser timeouts.
+  'daily_sales.php',
   'dashboard.php',
   'eod_summary.php',
-  'product_sales_summary.php',
-  'product_sales.php',
-  'ticket_sales.php',
   'busy_hours.php',
-  'daily_sales.php',
-  'weekly_sales.php',
-  'sold_out_date.php',
-  'category_sales.php'
+  'ticket_sales.php'
 ];
 
 // reporting.site pages often render KPI cards with JavaScript. These endpoints are
@@ -26,13 +23,7 @@ const DEFAULT_VIEWS = [
 const ENDPOINT_CANDIDATES = [
   'get_data.php',
   'get_data_period.php',
-  'fetch_data.php',
-  'dashboard.php',
-  'eod_summary.php',
-  'busy_hours.php',
-  'daily_sales.php',
-  'ticket_sales.php',
-  'product_sales_summary.php'
+  'fetch_data.php'
 ];
 
 export function getReportingConfig(env = process.env) {
@@ -59,7 +50,7 @@ export function buildReportingHeaders(env = process.env) {
   return {
     headers: {
       Cookie: cookieHeader,
-      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.5 (+https://la-donuts.local)',
+      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.6 (+https://la-donuts.local)',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-AU,en;q=0.9,fr;q=0.8',
       'Cache-Control': 'no-cache',
@@ -87,6 +78,9 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
   const reportingPOS = {};
   let storesWithMetrics = 0;
 
+  const timeoutMs = Number(env.REPORTING_FETCH_TIMEOUT_MS || 4500);
+  const deepSync = String(env.REPORTING_DEEP_SYNC || '').toLowerCase() === 'true';
+
   for (const store of config.stores) {
     const storeResult = {
       store: store.name,
@@ -99,7 +93,7 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
 
     for (const view of config.views) {
       const url = `${config.baseUrl}/${store.slug}/dashboard/${view}`;
-      const parsed = await fetchAndParse(url, view, headerResult.headers, fetchImpl);
+      const parsed = await fetchAndParse(url, view, headerResult.headers, fetchImpl, timeoutMs);
       storeResult.views[view] = parsed;
       if (!parsed.ok) {
         storeResult.ok = false;
@@ -109,7 +103,7 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
     }
 
     // Try AJAX/data endpoints with common date parameter names. This is the main
-    // Beta 0.2.5 improvement for reporting.site sync.
+    // Beta 0.2.6 improvement for reporting.site sync.
     const endpointResults = await tryReportingEndpoints(config.baseUrl, store.slug, headerResult.headers, fetchImpl, env);
     for (const result of endpointResults) {
       storeResult.views[result.view] = result;
@@ -136,7 +130,8 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
         .filter(([, v]) => hasNumericMetric(v?.metrics))
         .map(([view, v]) => ({ view, keys: Object.keys(v.metrics || {}).filter(k => typeof v.metrics[k] === 'number') }))
     };
-    reportingPOS[store.name] = summary;
+    // Only merge usable summaries. Failed syncs should not overwrite existing seed/manual values.
+    if (hasUsefulSummary(summary)) reportingPOS[store.name] = summary;
     details.push(storeResult);
   }
 
@@ -153,9 +148,12 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
 }
 
 
-async function fetchAndParse(url, view, headers, fetchImpl) {
+async function fetchAndParse(url, view, headers, fetchImpl, timeoutMs = 4500) {
   try {
-    const response = await fetchImpl(url, { headers, redirect: 'follow' });
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
+    const response = await fetchImpl(url, { headers, redirect: 'follow', signal: controller.signal });
+    clearTimeout(timer);
     const text = await response.text();
     const firstChunk = text.slice(0, 1600);
     const looksLoggedOut = response.url.toLowerCase().includes('login') || /login|password|sign\s*in|se connecter|mot de passe/i.test(firstChunk);
@@ -169,8 +167,8 @@ async function fetchAndParse(url, view, headers, fetchImpl) {
   }
 }
 
-async function tryReportingEndpoints(baseUrl, slug, headers, fetchImpl, env = process.env) {
-  const today = env.REPORTING_DATE || new Date().toISOString().slice(0, 10);
+async function tryReportingEndpoints(baseUrl, slug, headers, fetchImpl, env = process.env, timeoutMs = 4500) {
+  const today = env.REPORTING_DATE || australiaDate();
   const paramsList = [
     '',
     `?date=${encodeURIComponent(today)}`,
@@ -185,7 +183,7 @@ async function tryReportingEndpoints(baseUrl, slug, headers, fetchImpl, env = pr
     for (const qs of paramsList) {
       const view = `endpoint:${endpoint}${qs || ''}`;
       const url = `${baseUrl}/${slug}/dashboard/${endpoint}${qs}`;
-      const parsed = await fetchAndParse(url, view, headers, fetchImpl);
+      const parsed = await fetchAndParse(url, view, headers, fetchImpl, timeoutMs);
       results.push(parsed);
       if (hasNumericMetric(parsed.metrics) || hasHourlyRows(parsed)) {
         // Keep trying a few more endpoints, but avoid excessive calls once one useful response exists.
@@ -467,6 +465,16 @@ function hasNumericMetric(metrics = {}) {
 
 function hasUsefulSummary(summary = {}) {
   return [summary.totalSales, summary.netSales, summary.grossSales, summary.orders, summary.averageSpend].some(v => typeof v === 'number' && Number.isFinite(v));
+}
+
+function australiaDate() {
+  try {
+    const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Australia/Sydney', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+    const get = type => parts.find(p => p.type === type)?.value;
+    return `${get('year')}-${get('month')}-${get('day')}`;
+  } catch (_) {
+    return new Date().toISOString().slice(0, 10);
+  }
 }
 
 function normalize(s) {

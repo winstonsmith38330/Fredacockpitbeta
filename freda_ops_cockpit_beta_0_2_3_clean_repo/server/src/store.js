@@ -19,7 +19,7 @@ export function writeJson(filePath, data) {
 
 export function emptyLiveState() {
   return {
-    version: '0.2.5',
+    version: '0.2.6',
     updatedAt: null,
     reportingPOS: {},
     uberEats: {},
@@ -32,12 +32,17 @@ export function emptyLiveState() {
 
 export function mergeLive(seed, stored) {
   const sample = seed.liveSamples || {};
+  // Do not let failed live syncs with empty objects overwrite seeded or captured values.
+  // This was the main reason the UI looked "crystallised" after a failed sync.
+  const cleanReportingPOS = cleanMetricMap(stored.reportingPOS || {}, ['totalSales', 'netSales', 'grossSales', 'orders', 'averageSpend']);
+  const cleanUber = cleanMetricMap(stored.uberEats || {}, ['sales', 'totalSales', 'orders', 'aov', 'averageSpend']);
+  const cleanSquare = cleanMetricMap(stored.square || {}, ['sales', 'netSales', 'totalCollected', 'transactions']);
   return {
-    version: '0.2.5',
+    version: '0.2.6',
     updatedAt: stored.updatedAt || sample.lastUpdated || seed.meta?.generatedAt,
-    reportingPOS: { ...(sample.reportingPOS || {}), ...(stored.reportingPOS || {}) },
-    uberEats: { ...(sample.uberEats || {}), ...(stored.uberEats || {}) },
-    square: { ...(sample.square || {}), ...(stored.square || {}) },
+    reportingPOS: { ...(sample.reportingPOS || {}), ...cleanReportingPOS },
+    uberEats: { ...(sample.uberEats || {}), ...cleanUber },
+    square: { ...(sample.square || {}), ...cleanSquare },
     whatsapp: {
       summaries: [...(seed.whatsapp?.summaries || []), ...(stored.whatsapp?.summaries || [])],
       actions: [...(stored.whatsapp?.actions || [])]
@@ -96,4 +101,15 @@ export function num(v) {
 export function int(v) {
   const n = num(v);
   return n == null ? null : Math.round(n);
+}
+
+
+function cleanMetricMap(map = {}, metricKeys = []) {
+  const out = {};
+  for (const [store, payload] of Object.entries(map || {})) {
+    if (!payload || typeof payload !== 'object') continue;
+    const hasMetric = metricKeys.some(k => typeof payload[k] === 'number' && Number.isFinite(payload[k]));
+    if (hasMetric) out[store] = payload;
+  }
+  return out;
 }
