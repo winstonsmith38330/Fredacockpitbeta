@@ -29,7 +29,7 @@ function saveLive(data) { writeJson(LIVE_PATH, data); return data; }
 function liveMerged() { return mergeLive(seed(), liveRaw()); }
 
 app.get('/health', (_req, res) => {
-  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.4', livePath: LIVE_PATH });
+  res.json({ ok: true, service: 'freda-ops-cockpit-server', version: '0.2.5', livePath: LIVE_PATH });
 });
 
 app.get('/api/seed', (_req, res) => res.json(seed()));
@@ -74,25 +74,62 @@ app.post('/api/live/manual-snapshot', (req, res) => {
 
 app.post('/api/bookmarklet/capture', (req, res) => {
   const body = req.body || {};
-  const parsed = parsePageTextCapture(body.source || body.url || 'browser-capture', body.text || body.pageText || '');
+  const source = body.source || body.url || 'browser-capture';
+  const parsed = parsePageTextCapture(source, body.text || body.pageText || '');
+  const sourceText = `${source || ''} ${body.url || ''} ${body.title || ''}`.toLowerCase();
+  const store = body.store
+    || (sourceText.includes('beverly') ? 'Beverly Hills'
+    : sourceText.includes('penrith') ? 'Penrith'
+    : sourceText.includes('taren') ? 'Taren Point'
+    : sourceText.includes('frieda') || sourceText.includes('frida') ? "Frieda's Pies"
+    : null);
+
   let next = addCapture(liveRaw(), {
-    source: body.source || 'browser-capture',
+    source,
+    store: store || '',
+    period: body.period || parsed.metrics?.period || 'captured',
     url: body.url || '',
     title: body.title || '',
     parsed
   });
 
-  // If a manager uses the bookmarklet on reporting.site, also update POS by store when possible.
-  const sourceText = `${body.source || ''} ${body.url || ''} ${body.title || ''}`.toLowerCase();
-  const store = sourceText.includes('beverly') ? 'Beverly Hills'
-    : sourceText.includes('penrith') ? 'Penrith'
-    : sourceText.includes('taren') ? 'Taren Point'
-    : sourceText.includes('frieda') || sourceText.includes('frida') ? "Frieda's Pies"
-    : body.store || null;
   if (store && parsed.metrics) {
-    if (sourceText.includes('uber')) next.uberEats = { ...(next.uberEats || {}), [store]: { ...parsed.metrics, sourceView: 'browser capture', period: body.period || 'captured' } };
-    else if (sourceText.includes('square')) next.square = { ...(next.square || {}), [store]: { ...parsed.metrics, sourceView: 'browser capture', period: body.period || 'captured' } };
-    else next.reportingPOS = { ...(next.reportingPOS || {}), [store]: summarizeReportingStore(store, { 'capture': { metrics: parsed.metrics } }) };
+    const period = body.period || parsed.metrics.period || 'captured';
+    if (sourceText.includes('uber') || source === 'uberEats') {
+      next.uberEats = {
+        ...(next.uberEats || {}),
+        [store]: {
+          sales: firstMetric(parsed.metrics, ['sales', 'totalSales', 'totalRevenue', 'netSales']),
+          totalSales: firstMetric(parsed.metrics, ['sales', 'totalSales', 'totalRevenue', 'netSales']),
+          orders: firstMetric(parsed.metrics, ['orders', 'transactions']),
+          aov: firstMetric(parsed.metrics, ['aov', 'averageSpend', 'averageOrderValue']),
+          averageSpend: firstMetric(parsed.metrics, ['aov', 'averageSpend', 'averageOrderValue']),
+          period,
+          periodLabel: /^\d{4}-\d{2}-\d{2}$/.test(period) ? 'Today/daily' : period,
+          hourlyRows: parsed.hourlyRows || [],
+          sourceView: `browser view capture: ${body.title || body.url || source}`,
+          capturedAt: new Date().toISOString()
+        }
+      };
+    } else if (sourceText.includes('square') || source === 'square') {
+      const sales = firstMetric(parsed.metrics, ['netSales', 'totalCollected', 'sales', 'totalSales', 'totalRevenue']);
+      next.square = {
+        ...(next.square || {}),
+        [store]: {
+          netSales: sales,
+          totalCollected: sales,
+          sales,
+          transactions: firstMetric(parsed.metrics, ['transactions', 'orders']),
+          period,
+          periodLabel: /^\d{4}-\d{2}-\d{2}$/.test(period) ? 'Today/daily' : 'MTD/captured period',
+          sourceView: `browser view capture: ${body.title || body.url || source}`,
+          capturedAt: new Date().toISOString()
+        }
+      };
+    } else {
+      const posSummary = summarizeReportingStore(store, { capture: { metrics: parsed.metrics, hourlyRows: parsed.hourlyRows || [], ok: true } });
+      next.reportingPOS = { ...(next.reportingPOS || {}), [store]: { ...posSummary, period, sourceView: `browser view capture: ${body.title || body.url || source}` } };
+    }
   }
   saveLive(next);
   res.json({ ok: true, parsed, live: mergeLive(seed(), next) });
@@ -149,7 +186,15 @@ app.post('/api/assistant', (req, res) => {
 app.use(express.static(WEB_PATH, { extensions: ['html'] }));
 app.get('*', (_req, res) => res.sendFile(path.join(WEB_PATH, 'index.html')));
 
-app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2.4 running on http://localhost:${PORT}`));
+app.listen(PORT, () => console.log(`Freda Ops Cockpit Beta 0.2.5 running on http://localhost:${PORT}`));
+
+function firstMetric(obj = {}, keys = []) {
+  for (const key of keys) {
+    const value = obj[key];
+    if (typeof value === 'number' && Number.isFinite(value)) return value;
+  }
+  return null;
+}
 
 function money(n) {
   return n == null ? '—' : '$' + Math.round(Number(n)).toLocaleString('en-AU');
