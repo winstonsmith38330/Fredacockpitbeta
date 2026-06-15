@@ -13,8 +13,26 @@ const DEFAULT_VIEWS = [
   'product_sales.php',
   'ticket_sales.php',
   'busy_hours.php',
+  'daily_sales.php',
+  'weekly_sales.php',
   'sold_out_date.php',
   'category_sales.php'
+];
+
+// reporting.site pages often render KPI cards with JavaScript. These endpoints are
+// visible in the dashboard directory listing and are tried after the normal pages.
+// They are deliberately broad and non-destructive: if an endpoint is missing, the
+// connector records diagnostics and moves on.
+const ENDPOINT_CANDIDATES = [
+  'get_data.php',
+  'get_data_period.php',
+  'fetch_data.php',
+  'dashboard.php',
+  'eod_summary.php',
+  'busy_hours.php',
+  'daily_sales.php',
+  'ticket_sales.php',
+  'product_sales_summary.php'
 ];
 
 export function getReportingConfig(env = process.env) {
@@ -41,7 +59,7 @@ export function buildReportingHeaders(env = process.env) {
   return {
     headers: {
       Cookie: cookieHeader,
-      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.3 (+https://la-donuts.local)',
+      'User-Agent': 'Mozilla/5.0 FredaOpsCockpit/0.2.4 (+https://la-donuts.local)',
       Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
       'Accept-Language': 'en-AU,en;q=0.9,fr;q=0.8',
       'Cache-Control': 'no-cache',
@@ -81,26 +99,22 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
 
     for (const view of config.views) {
       const url = `${config.baseUrl}/${store.slug}/dashboard/${view}`;
-      try {
-        const response = await fetchImpl(url, { headers: headerResult.headers, redirect: 'follow' });
-        const html = await response.text();
-        const firstChunk = html.slice(0, 1600);
-        const looksLoggedOut = response.url.toLowerCase().includes('login') || /login|password|sign\s*in|se connecter|mot de passe/i.test(firstChunk);
-        if (!response.ok || looksLoggedOut) {
-          const message = looksLoggedOut ? 'Auth failed or session expired' : `HTTP ${response.status}`;
-          storeResult.ok = false;
-          storeResult.errors.push({ view, url, message });
-          storeResult.views[view] = { ok: false, url, message, fetchedAt: new Date().toISOString() };
-          continue;
-        }
-        const parsed = parseReportingPage(view, html, url);
-        storeResult.views[view] = parsed;
-        if (hasNumericMetric(parsed.metrics)) storeResult.hasMetrics = true;
-      } catch (error) {
+      const parsed = await fetchAndParse(url, view, headerResult.headers, fetchImpl);
+      storeResult.views[view] = parsed;
+      if (!parsed.ok) {
         storeResult.ok = false;
-        storeResult.errors.push({ view, url, message: error.message });
-        storeResult.views[view] = { ok: false, url, message: error.message, fetchedAt: new Date().toISOString() };
+        storeResult.errors.push({ view, url, message: parsed.message || 'Fetch/parse failed' });
       }
+      if (hasNumericMetric(parsed.metrics)) storeResult.hasMetrics = true;
+    }
+
+    // Try AJAX/data endpoints with common date parameter names. This is the main
+    // Beta 0.2.4 improvement for reporting.site sync.
+    const endpointResults = await tryReportingEndpoints(config.baseUrl, store.slug, headerResult.headers, fetchImpl, env);
+    for (const result of endpointResults) {
+      storeResult.views[result.view] = result;
+      if (!result.ok) storeResult.errors.push({ view: result.view, url: result.url, message: result.message || 'Endpoint did not parse' });
+      if (hasNumericMetric(result.metrics)) storeResult.hasMetrics = true;
     }
 
     const summary = summarizeReportingStore(store.name, storeResult.views);
@@ -112,7 +126,7 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
       storeResult.errors.push({
         view: 'summary',
         url: `${config.baseUrl}/${store.slug}/dashboard/`,
-        message: 'Pages fetched, but no sales KPI was parsed. This reporting.site view may inject data with browser JavaScript. Use browser capture or manual snapshot while connector parsing is tightened.'
+        message: 'Pages fetched, but no sales KPI was parsed. This reporting.site view may inject data with browser JavaScript. Use Data -> browser capture/manual snapshot while endpoint mapping is tightened.'
       });
     }
     summary.connectorDiagnostic = {
@@ -136,6 +150,135 @@ export async function syncReportingSite(env = process.env, fetchImpl = fetch) {
     details,
     diagnostic: { storesWithMetrics, storesAttempted: config.stores.length }
   };
+}
+
+
+async function fetchAndParse(url, view, headers, fetchImpl) {
+  try {
+    const response = await fetchImpl(url, { headers, redirect: 'follow' });
+    const text = await response.text();
+    const firstChunk = text.slice(0, 1600);
+    const looksLoggedOut = response.url.toLowerCase().includes('login') || /login|password|sign\s*in|se connecter|mot de passe/i.test(firstChunk);
+    if (!response.ok || looksLoggedOut) {
+      const message = looksLoggedOut ? 'Auth failed or session expired' : `HTTP ${response.status}`;
+      return { ok: false, view, url, message, status: response.status, fetchedAt: new Date().toISOString(), rawTextPreview: firstChunk };
+    }
+    return parseReportingAny(view, text, url, response.headers.get('content-type') || '');
+  } catch (error) {
+    return { ok: false, view, url, message: error.message, fetchedAt: new Date().toISOString() };
+  }
+}
+
+async function tryReportingEndpoints(baseUrl, slug, headers, fetchImpl, env = process.env) {
+  const today = env.REPORTING_DATE || new Date().toISOString().slice(0, 10);
+  const paramsList = [
+    '',
+    `?date=${encodeURIComponent(today)}`,
+    `?start_date=${encodeURIComponent(today)}&end_date=${encodeURIComponent(today)}`,
+    `?from=${encodeURIComponent(today)}&to=${encodeURIComponent(today)}`,
+    `?from_date=${encodeURIComponent(today)}&to_date=${encodeURIComponent(today)}`,
+    `?range=today`,
+    `?period=today`
+  ];
+  const results = [];
+  for (const endpoint of ENDPOINT_CANDIDATES) {
+    for (const qs of paramsList) {
+      const view = `endpoint:${endpoint}${qs || ''}`;
+      const url = `${baseUrl}/${slug}/dashboard/${endpoint}${qs}`;
+      const parsed = await fetchAndParse(url, view, headers, fetchImpl);
+      results.push(parsed);
+      if (hasNumericMetric(parsed.metrics) || hasHourlyRows(parsed)) {
+        // Keep trying a few more endpoints, but avoid excessive calls once one useful response exists.
+        break;
+      }
+    }
+  }
+  return results;
+}
+
+function parseReportingAny(view, text, url, contentType = '') {
+  const trimmed = String(text || '').trim();
+  if (contentType.includes('json') || /^[\[{]/.test(trimmed)) {
+    try {
+      const data = JSON.parse(trimmed);
+      const flatText = flattenJson(data).join(' ');
+      const metrics = { ...extractMetrics(view, flatText), ...extractMetricsFromJson(data) };
+      const hourlyRows = extractHourlyRowsFromJson(data);
+      return { ok: true, view, url, title: 'JSON/data endpoint', metrics, hourlyRows, rawTextPreview: trimmed.slice(0, 3000), fetchedAt: new Date().toISOString() };
+    } catch (_) {
+      // fall through to HTML/text parser
+    }
+  }
+  const parsed = parseReportingPage(view, text, url);
+  parsed.hourlyRows = extractHourlyRowsFromText(parsed.rawTextPreview || text);
+  return parsed;
+}
+
+function flattenJson(value, out = []) {
+  if (value == null) return out;
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') out.push(String(value));
+  else if (Array.isArray(value)) value.forEach(v => flattenJson(v, out));
+  else if (typeof value === 'object') Object.entries(value).forEach(([k, v]) => { out.push(k); flattenJson(v, out); });
+  return out;
+}
+
+function extractMetricsFromJson(data) {
+  const metrics = {};
+  function walk(obj, parentKey = '') {
+    if (obj == null) return;
+    if (Array.isArray(obj)) return obj.forEach(v => walk(v, parentKey));
+    if (typeof obj !== 'object') return;
+    for (const [key, val] of Object.entries(obj)) {
+      const k = String(key).toLowerCase();
+      const n = toNumber(val);
+      if (n != null) {
+        if (/gross.*sale|gross.*revenue/.test(k)) metrics.grossSales ??= n;
+        else if (/net.*sale|net.*revenue/.test(k)) metrics.netSales ??= n;
+        else if (/total.*sale|total.*revenue|sales_total|revenue/.test(k)) metrics.totalSales ??= n;
+        else if (/order|ticket|transaction/.test(k)) metrics.orders ??= n;
+        else if (/aov|average.*spend|average.*sale|avg.*ticket/.test(k)) metrics.averageSpend ??= n;
+        else if (/cash/.test(k)) metrics.cash ??= n;
+        else if (/card|eftpos/.test(k)) metrics.card ??= n;
+        else if (/online/.test(k)) metrics.online ??= n;
+      }
+      walk(val, k);
+    }
+  }
+  walk(data);
+  return metrics;
+}
+
+function extractHourlyRowsFromJson(data) {
+  const rows = [];
+  function walk(obj) {
+    if (obj == null) return;
+    if (Array.isArray(obj)) return obj.forEach(walk);
+    if (typeof obj !== 'object') return;
+    const keys = Object.keys(obj).reduce((a, k) => ({ ...a, [k.toLowerCase()]: k }), {});
+    const hourKey = keys.hour || keys.time || keys.label || keys.period;
+    const salesKey = keys.sales || keys.revenue || keys.total || keys.amount || keys.net_sales || keys.total_sales;
+    if (hourKey && salesKey) {
+      const hour = String(obj[hourKey]);
+      const sales = toNumber(obj[salesKey]);
+      if (sales != null && /\d{1,2}(:\d{2})?|am|pm/i.test(hour)) rows.push({ hour, sales });
+    }
+    Object.values(obj).forEach(walk);
+  }
+  walk(data);
+  return rows.slice(0, 48);
+}
+
+function extractHourlyRowsFromText(text) {
+  const rows = [];
+  const t = String(text || '');
+  const regex = /\b(\d{1,2}:00|\d{1,2}\s*(?:am|pm))\b[^$\d]{0,40}\$?\s*([\d,]+(?:\.\d{1,2})?)/gi;
+  let m;
+  while ((m = regex.exec(t)) && rows.length < 48) rows.push({ hour: m[1].replace(/\s+/g, ''), sales: toNumber(m[2]) });
+  return rows;
+}
+
+function hasHourlyRows(parsed = {}) {
+  return Array.isArray(parsed.hourlyRows) && parsed.hourlyRows.length > 0;
 }
 
 export function parseReportingPage(view, html, url = '') {
@@ -261,6 +404,7 @@ export function summarizeReportingStore(storeName, views) {
     topProduct: product.topProduct,
     topCategory: firstText(productSummary.bestSellingCategory, category.bestSellingCategory),
     leastCategory: firstText(productSummary.leastSellingCategory, category.leastSellingCategory),
+    hourlyRows: collectHourlyRows(views),
     views,
     sourceView: `reporting.site live connector (${Object.keys(views).filter(v => views[v]?.ok).join(', ') || 'no successful views'})`,
     capturedAt: new Date().toISOString()
@@ -274,6 +418,21 @@ export function parsePageTextCapture(source, text) {
     metrics: extractMetrics(source || 'capture', normalized),
     rawTextPreview: normalized.slice(0, 2000)
   };
+}
+
+
+function collectHourlyRows(views = {}) {
+  const rows = [];
+  for (const v of Object.values(views)) {
+    if (Array.isArray(v?.hourlyRows)) rows.push(...v.hourlyRows);
+  }
+  const seen = new Set();
+  return rows.filter(r => {
+    const key = `${r.hour}|${r.sales}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).slice(0, 48);
 }
 
 function hasNumericMetric(metrics = {}) {

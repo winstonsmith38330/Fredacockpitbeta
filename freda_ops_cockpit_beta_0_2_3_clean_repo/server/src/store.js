@@ -19,7 +19,7 @@ export function writeJson(filePath, data) {
 
 export function emptyLiveState() {
   return {
-    version: '0.2.3',
+    version: '0.2.4',
     updatedAt: null,
     reportingPOS: {},
     uberEats: {},
@@ -33,7 +33,7 @@ export function emptyLiveState() {
 export function mergeLive(seed, stored) {
   const sample = seed.liveSamples || {};
   return {
-    version: '0.2.3',
+    version: '0.2.4',
     updatedAt: stored.updatedAt || sample.lastUpdated || seed.meta?.generatedAt,
     reportingPOS: { ...(sample.reportingPOS || {}), ...(stored.reportingPOS || {}) },
     uberEats: { ...(sample.uberEats || {}), ...(stored.uberEats || {}) },
